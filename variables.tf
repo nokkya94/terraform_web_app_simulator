@@ -1,0 +1,60 @@
+variable "aws_region" {
+  description = "The AWS region to deploy resources in"
+  type        = string
+}
+
+variable "vpc_cidr_block" {
+  description = "CIDR block for the VPC"
+  type        = string
+  validation {
+    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.vpc_cidr_block))
+    error_message = "VPC CIDR block must be in the format x.x.x.x/<some_network_prefix>"
+  }
+}
+
+variable "private_subnet_cidr_block" {
+  description = "CIDR block for the private subnet"
+  type        = string
+  validation {
+    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.private_subnet_cidr_block))
+    error_message = "Private subnet CIDR block must be in the format x.x.x.x/<some_network_prefix>"
+  }
+}
+
+variable "public_subnet_cidr_blocks" {
+  description = "CIDR block for the public subnet"
+  type        = list(string)
+
+}
+
+variable "backend_bucket_name" {
+  description = "The name of the S3 bucket for storing Terraform state files"
+  type        = string
+}
+variable "dynamodb_table_name" {
+  description = "The name of the DynamoDB table for state locking"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z0-9-]{3,63}$", var.dynamodb_table_name))
+    error_message = "DynamoDB table name must be lowercase and between 3 and 63 characters long."
+  }
+}
+
+variable "instance_count" {
+  description = "Number of instances to launch"
+  type        = number
+  default     = 2
+}
+variable "instance_type" {
+  description = "Instance type for the instances"
+  type        = string
+  default     = "t3.micro"
+}
+variable "iam_user_name" {
+  description = "IAM username that Terraform should grant access to"
+  type        = string
+}
+variable "terraform_iam_role_name" {
+  description = "IAM role name for Terraform operations"
+  type        = string
+}
