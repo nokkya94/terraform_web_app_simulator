@@ -12,8 +12,8 @@ variable "ami_id" {
   type        = string
 }
 
-variable "subnet_id" {
-  type = string
+variable "subnet_ids" {
+  type = list(string)
 }
 
 variable "vpc_security_group_ids" {
@@ -27,4 +27,8 @@ variable "alb_dns_name" {
     condition     = can(regex("^[a-z0-9.-]+\\.elb\\.amazonaws\\.com$", var.alb_dns_name))
     error_message = "ALB DNS name must be a valid AWS ELB DNS format."
   }
+}
+
+variable "webapp_instance_key_name" {
+  type        = string
 }

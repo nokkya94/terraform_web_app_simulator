@@ -12,19 +12,9 @@ variable "vpc_cidr_block" {
   }
 }
 
-variable "private_subnet_cidr_block" {
-  description = "CIDR block for the private subnet"
-  type        = string
-  validation {
-    condition     = can(regex("^([0-9]{1,3}\\.){3}[0-9]{1,3}/[0-9]{1,2}$", var.private_subnet_cidr_block))
-    error_message = "Private subnet CIDR block must be in the format x.x.x.x/<some_network_prefix>"
-  }
-}
-
 variable "public_subnet_cidr_blocks" {
   description = "CIDR block for the public subnet"
   type        = list(string)
-
 }
 
 variable "backend_bucket_name" {
@@ -50,11 +40,26 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
-variable "iam_user_name" {
-  description = "IAM username that Terraform should grant access to"
+#### below are commented out variables that can be used for IAM user and role management for remote state management
+# variable "iam_user_name" {
+#   description = "IAM username that Terraform should grant access to"
+#   type        = string
+# }
+# variable "iam_role_name" {
+#   description = "IAM role name for Terraform operations"
+#   type        = string
+# }
+variable "ssh_my_ip" {
+  description = "Your IP address in CIDR notation for SSH access"
   type        = string
 }
-variable "terraform_iam_role_name" {
-  description = "IAM role name for Terraform operations"
+
+variable "webapp_instance_key_name" {
+  description = "Key name for the web application instances"
+  type        = string
+}
+
+variable "bastion_key_name" {
+  description = "Key name for the bastion host"
   type        = string
 }

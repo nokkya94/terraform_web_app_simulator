@@ -5,15 +5,6 @@ resource "aws_vpc" "main_vpc" {
     }
 }
 
-resource "aws_subnet" "private_subnet" {
-  vpc_id = aws_vpc.main_vpc.id
-  cidr_block = var.private_subnet_cidr_block
-  availability_zone = var.availability_zones[0]
-  tags = {
-    Name = "PrivateSubnet"
-  }
-}
-
 resource "aws_subnet" "public_subnet" {
   count = 2
   vpc_id = aws_vpc.main_vpc.id
