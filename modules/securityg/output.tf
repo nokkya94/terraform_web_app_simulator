@@ -7,3 +7,8 @@ output "webapp_instance_sg_id" {
   value       = aws_security_group.webapp_instance_sg.id
   description = "The ID of the web application instance security group"
 }
+
+output "bastion_sg_id" {
+  value       = aws_security_group.bastion_sg.id
+  description = "The ID of the bastion security group"
+}
