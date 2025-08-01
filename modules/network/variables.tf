@@ -13,6 +13,11 @@ variable "public_subnet_cidr_blocks" {
   type        = list(string)
 }
 
+variable "private_subnet_cidr_blocks" {
+  description = "List of CIDR blocks for private subnets"
+  type        = list(string)
+}
+
 variable "availability_zones" {
   type        = list(string)
   description = "availability zone for the resources"
@@ -21,4 +26,9 @@ variable "availability_zones" {
 variable "alb_security_group_id" {
   type = list(string)
   description = "Security group IDs for the Application Load Balancer"
+}
+
+variable "alb_logs_bucket_name" {
+  type        = string
+  description = "S3 bucket name for storing ALB logs"
 }

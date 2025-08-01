@@ -7,14 +7,25 @@ resource "aws_instance" "webapp_instance" {
   key_name          = aws_key_pair.webapp_instance_key.key_name
   vpc_security_group_ids = var.vpc_security_group_ids
   associate_public_ip_address = true
-  
+  ebs_optimized     = true
+  iam_instance_profile = var.ec2_iam_instance_profile_name
+
+
   tags = {
     Name = "WebAppInstance-${count.index}"
   }
-
+  
   user_data = templatefile("${path.module}/user_data.sh", {
   })
   
+  metadata_options {
+    http_tokens   = "required"   # Forces use of IMDSv2
+    http_endpoint = "enabled"
+  }
+
+  root_block_device {
+    encrypted = true
+  }
 }
 
 resource "aws_key_pair" "webapp_instance_key" {

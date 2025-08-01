@@ -44,6 +44,15 @@ resource "aws_lb" "webapp_alb" {
   load_balancer_type = "application"
   security_groups = var.alb_security_group_id
   subnets            = [aws_subnet.public_subnet[0].id, aws_subnet.public_subnet[1].id]
+  drop_invalid_header_fields = true
+  enable_deletion_protection  = true
+
+    access_logs {
+    bucket  = var.alb_logs_bucket_name   # Define this variable or hardcode your bucket name
+    enabled = true
+    prefix  = "alb-logs/"
+  }
+
 }
 
 resource "aws_lb_target_group" "webapp_tg" {
@@ -77,4 +86,16 @@ resource "aws_lb_listener" "webapp_listener" {
     target_group_arn = aws_lb_target_group.webapp_tg.arn
   }
   
+}
+
+resource "aws_subnet" "private_subnet" {
+  count                   = length(var.private_subnet_cidr_blocks)
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = var.private_subnet_cidr_blocks[count.index]
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = false
+
+  tags = {
+    Name = "private-subnet-${count.index}"
+  }
 }

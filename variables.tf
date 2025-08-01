@@ -17,18 +17,24 @@ variable "public_subnet_cidr_blocks" {
   type        = list(string)
 }
 
-variable "backend_bucket_name" {
-  description = "The name of the S3 bucket for storing Terraform state files"
-  type        = string
+variable "private_subnet_cidr_blocks" {
+  description = "List of CIDR blocks for private subnets"
+  type        = list(string)
+
 }
-variable "dynamodb_table_name" {
-  description = "The name of the DynamoDB table for state locking"
-  type        = string
-  validation {
-    condition     = can(regex("^[a-z0-9-]{3,63}$", var.dynamodb_table_name))
-    error_message = "DynamoDB table name must be lowercase and between 3 and 63 characters long."
-  }
-}
+
+# variable "backend_bucket_name" {
+#   description = "The name of the S3 bucket for storing Terraform state files"
+#   type        = string
+# }
+# variable "dynamodb_table_name" {
+#   description = "The name of the DynamoDB table for state locking"
+#   type        = string
+#   validation {
+#     condition     = can(regex("^[a-z0-9-]{3,63}$", var.dynamodb_table_name))
+#     error_message = "DynamoDB table name must be lowercase and between 3 and 63 characters long."
+#   }
+# }
 
 variable "instance_count" {
   description = "Number of instances to launch"
@@ -62,4 +68,26 @@ variable "webapp_instance_key_name" {
 variable "bastion_key_name" {
   description = "Key name for the bastion host"
   type        = string
+}
+
+variable "db_username" {
+  type        = string
+  sensitive   = true
+  description = "value for the database username"
+}
+
+variable "db_password" {
+  type        = string
+  sensitive   = true
+  description = "value for the database password"
+}
+
+variable "environment" {
+  type        = string
+  description = "The environment for the deployment (e.g., dev, staging, prod)"
+}
+
+variable "s3_bucket_with_alb_logs" {
+  type        = string
+  description = "S3 bucket name for storing ALB logs"
 }

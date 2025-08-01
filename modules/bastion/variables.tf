@@ -9,3 +9,7 @@ variable "bastion_security_group_ids" {
   type = list(string)
   description = "List of security group IDs for the bastion host"
 }
+variable "ec2_iam_instance_profile_name" {
+  description = "IAM instance profile name for the bastion host"
+  type        = string
+}
