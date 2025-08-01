@@ -5,6 +5,7 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   key_name                    = var.bastion_key_name
   vpc_security_group_ids      = var.bastion_security_group_ids
+    iam_instance_profile        = var.ec2_iam_instance_profile_name
   tags = {
     Name = "bastion-host"
   }

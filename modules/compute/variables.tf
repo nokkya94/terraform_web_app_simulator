@@ -32,3 +32,8 @@ variable "alb_dns_name" {
 variable "webapp_instance_key_name" {
   type        = string
 }
+
+variable "ec2_iam_instance_profile_name" {
+  description = "IAM instance profile name for EC2 instances"
+  type        = string
+}

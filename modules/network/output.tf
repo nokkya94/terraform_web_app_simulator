@@ -13,3 +13,10 @@ output "alb_dns_name" {
 output "alb_target_group_arn" {
   value = aws_lb_target_group.webapp_tg.arn
 }
+output "webapp_alb_arn" {
+  value = aws_lb.webapp_alb.arn
+  description = "The ARN of the web application ALB"
+}
+output "private_subnet_ids" {
+  value = aws_subnet.private_subnet[*].id
+}
