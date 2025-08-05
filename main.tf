@@ -57,9 +57,9 @@ module "bastion" {
 }
 
 resource "aws_lb_target_group_attachment" "webapp_attachment" {
-  for_each         = { for idx, id in module.compute.instance_ids : idx => id }
+  count         = var.instance_count
   target_group_arn = module.network.alb_target_group_arn
-  target_id        = each.value
+  target_id        = module.compute.instance_ids[count.index]
   port             = 80
   depends_on       = [module.compute]
 }
@@ -70,6 +70,7 @@ module "rds_postgres" {
   db_username = var.db_username
   db_password = var.db_password
   db_sg_id    = module.securityg.rds_postgres_sg_id
+  rds_monitoring_role_arn = module.iam.rds_monitoring_role_arn
 }
 
 module "aws_ssm_parameters" {

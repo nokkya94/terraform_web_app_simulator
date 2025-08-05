@@ -14,3 +14,8 @@ variable "db_password" {
 variable "db_sg_id" {
   type = string
 }
+
+variable "rds_monitoring_role_arn" {
+  type        = string
+  description = "ARN of the IAM role for RDS enhanced monitoring"
+}

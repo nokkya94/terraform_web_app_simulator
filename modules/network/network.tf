@@ -45,12 +45,12 @@ resource "aws_lb" "webapp_alb" {
   security_groups = var.alb_security_group_id
   subnets            = [aws_subnet.public_subnet[0].id, aws_subnet.public_subnet[1].id]
   drop_invalid_header_fields = true
-  enable_deletion_protection  = true
+  enable_deletion_protection  = false
 
     access_logs {
     bucket  = var.alb_logs_bucket_name   # Define this variable or hardcode your bucket name
     enabled = true
-    prefix  = "alb-logs/"
+    prefix  = "alb-logs"
   }
 
 }

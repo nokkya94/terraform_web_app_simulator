@@ -39,7 +39,6 @@ variable "private_subnet_cidr_blocks" {
 variable "instance_count" {
   description = "Number of instances to launch"
   type        = number
-  default     = 2
 }
 variable "instance_type" {
   description = "Instance type for the instances"

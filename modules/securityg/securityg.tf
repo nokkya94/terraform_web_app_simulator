@@ -59,7 +59,7 @@ egress {
   from_port   = 5432
   to_port     = 5432
   protocol    = "tcp"
-  security_groups = var.rds_postgres_cidr_blocks
+  cidr_blocks = var.rds_postgres_cidr_blocks
 }
 }
 
