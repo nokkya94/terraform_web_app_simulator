@@ -1,19 +1,15 @@
 #!/bin/bash
+set -e
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 
 yum update -y
-amazon-linux-extras enable python3.8
-yum install -y python38 git
+yum install -y python3 python3-pip git amazon-ssm-agent jq aws-cli
 
-# Installing SSM agent to retrieve parameters from SSM
-yum install -y amazon-ssm-agent
+# Enabling SSM agent to retrieve parameters from SSM
 systemctl enable amazon-ssm-agent
 systemctl start amazon-ssm-agent
 
-yum install -y jq aws-cli
-
 # Install pip and Flask
-python3.8 -m ensurepip
 pip3 install flask psycopg2-binary
 
 # Create app directory
@@ -61,25 +57,28 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
 EOF
 
+# Retrieve DB credentials from SSM
+DB_USER=$(aws ssm get-parameter --name "/webapp/db/username" --with-decryption --region us-east-1 | jq -r '.Parameter.Value')
+DB_PASS=$(aws ssm get-parameter --name "/webapp/db/password" --with-decryption --region us-east-1 | jq -r '.Parameter.Value')
+
 # Create systemd unit to run Flask app
 cat <<EOF > /etc/systemd/system/webapp.service
 [Unit]
 Description=Flask Web App
 
 [Service]
-Environment=DB_HOST=<RDS_ENDPOINT>
+Environment=DB_HOST="${rds_endpoint}"
 Environment=DB_NAME=webappdb
-Environment=DB_USER=$(aws ssm get-parameter --name "/webapp/db/username" --with-decryption --region us-east-1 | jq -r '.Parameter.Value')
-Environment=DB_PASS=$(aws ssm get-parameter --name "/webapp/db/password" --with-decryption --region us-east-1 | jq -r '.Parameter.Value')
+Environment=DB_USER=${DB_USER}
+Environment=DB_PASS=${DB_PASS}
 
-ExecStart=/usr/bin/python3.8 /opt/webapp/app.py
+ExecStart=/usr/bin/python3 /opt/webapp/app.py
 Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reexec
 systemctl daemon-reload
 systemctl enable webapp
 systemctl start webapp

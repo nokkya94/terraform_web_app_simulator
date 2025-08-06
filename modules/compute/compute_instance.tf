@@ -16,6 +16,9 @@ resource "aws_instance" "webapp_instance" {
   }
   
   user_data = templatefile("${path.module}/user_data.sh", {
+    rds_endpoint = var.rds_endpoint
+    DB_USER      = var.db_username
+    DB_PASS  = var.db_password
   })
   
   metadata_options {

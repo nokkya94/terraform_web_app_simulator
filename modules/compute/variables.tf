@@ -37,3 +37,19 @@ variable "ec2_iam_instance_profile_name" {
   description = "IAM instance profile name for EC2 instances"
   type        = string
 }
+
+variable "rds_endpoint" {
+  description = "Endpoint of the RDS instance"
+  type        = string
+}
+
+variable "db_username" {
+  description = "Database username for RDS"
+  type        = string
+}
+
+variable "db_password" {
+  description = "Database password for RDS"
+  type        = string
+  sensitive   = true
+}

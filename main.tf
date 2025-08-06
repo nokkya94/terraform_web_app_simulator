@@ -43,6 +43,9 @@ module "compute" {
   alb_dns_name                  = module.network.alb_dns_name
   webapp_instance_key_name      = var.webapp_instance_key_name
   depends_on                    = [module.network]
+  rds_endpoint = module.rds_postgres.rds_endpoint
+  db_username  = var.db_username
+  db_password  = var.db_password
 }
 
 module "bastion" {
