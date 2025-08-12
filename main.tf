@@ -100,8 +100,3 @@ resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
 module "waf" {
   source = "./modules/waf"
 }
-
-module "vpc_flow_logs" {
-  source = "./modules/vpc_flow_logging"
-  vpc_id = module.network.vpc_id
-}

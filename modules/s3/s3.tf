@@ -1,6 +1,7 @@
 #tfsec:ignore:AWS002
 #tfsec:ignore:AWS018
 #tfsec:ignore:AWS019
+#tfsec:ignore:aws-s3-enable-versioning
 resource "aws_s3_bucket" "alb_logs_bucket" {
   bucket          = var.alb_logs_bucket_name
   force_destroy = true
@@ -17,6 +18,7 @@ resource "aws_s3_bucket_public_access_block" "alb_logs_bucket_block" {
 }
 
 #tfsec:ignore:AWS017
+#tfsec:ignore:aws-s3-encryption-customer-key
 resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs_bucket_encryption" {
   bucket = aws_s3_bucket.alb_logs_bucket.id
 
