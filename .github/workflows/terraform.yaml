@@ -61,7 +61,7 @@ jobs:
         run: pip install checkov
 
       - name: Run Checkov
-        run: checkov -d . --config-file checkov.yaml
+        run: checkov -d . --external-checks-dir . --suppress-config-file .checkov.suppress.yaml
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
