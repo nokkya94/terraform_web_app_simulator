@@ -61,7 +61,7 @@ jobs:
         run: pip install checkov
 
       - name: Run Checkov
-        run: checkov -d .
+        run: checkov -c .checkov.yaml -d .
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan

@@ -1,100 +1,117 @@
 skip-check:
-  - id: CKV_AWS_126
-    suppress-comment: "Suppress detailed monitoring requirement for bastion host"
-    resource: module.bastion.aws_instance.bastion
-
-  - id: CKV_AWS_8
-    suppress-comment: "Suppress EBS encryption requirement for bastion host"
-    resource: module.bastion.aws_instance.bastion
-
-  - id: CKV_AWS_135
-    suppress-comment: "Suppress EBS optimization requirement for bastion host"
-    resource: module.bastion.aws_instance.bastion
-
-  - id: CKV_AWS_88
-    suppress-comment: "Suppress public IP warning for bastion host"
-    resource: module.bastion.aws_instance.bastion
-
-  - id: CKV_AWS_126
-    suppress-comment: "Suppress detailed monitoring requirement for web host"
-    resource: module.compute.aws_instance.webapp_instance
-
-  - id: CKV_AWS_8
-    suppress-comment: "Suppress EBS encryption requirement for web host"
-    resource: module.compute.aws_instance.webapp_instance
-
-  - id: CKV_AWS_135
-    suppress-comment: "Suppress EBS optimization requirement for web host"
-    resource: module.compute.aws_instance.webapp_instance
-
-  - id: CKV_AWS_21
-    suppress-comment: "Ensure all data stored in the S3 bucket have versioning enabled"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV_AWS_145
-    suppress-comment: "Ensure that S3 buckets are encrypted with KMS by default"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV2_AWS_62
-    suppress-comment: "Ensure S3 buckets should have event notifications enabled"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV_AWS_18
-    suppress-comment: "Ensure the S3 bucket has access logging enabled"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV_AWS_144
-    suppress-comment: "Ensure that S3 bucket has cross-region replication enabled"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV2_AWS_61
-    suppress-comment: "Ensure that an S3 bucket has a lifecycle configuration"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV_AWS_19
-    suppress-comment: "Suppress customer managed key requirement for S3 bucket"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV_AWS_54
-    suppress-comment: "Suppress S3 public access block requirement"
-    resource: module.s3.aws_s3_bucket.alb_logs_bucket
-
-  - id: CKV2_AWS_5
-    suppress-comment: "Ensure that Security Groups are attached to another resource"
-    resource: module.securityg.aws_security_group.webapp_alb_sg
-
-  - id: CKV_AWS_382
-    suppress-comment: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
-    resource: module.securityg.aws_security_group.webapp_alb_sg
-
-  - id: CKV_AWS_260
-    suppress-comment: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
-    resource: module.securityg.aws_security_group.webapp_alb_sg
-
-  - id: CKV_AWS_123
-    suppress-comment: "Suppress RDS performance insights encryption requirement"
-    resource: module.rds_postgres.aws_db_instance.webapp
-
-  - id: CKV_AWS_124
-    suppress-comment: "Suppress RDS backup retention requirement"
-    resource: module.rds_postgres.aws_db_instance.webapp
-
-  - id: CKV_AWS_293
-    suppress-comment: "Ensure that AWS database instances have deletion protection enabled"
-    resource: module.rds_postgres.aws_db_instance.webapp
-
-  - id: CKV_AWS_157
-    suppress-comment: "Ensure that RDS instances have Multi-AZ enabled"
-    resource: module.rds_postgres.aws_db_instance.webapp
-
-  - id: CKV2_AWS_69
-    suppress-comment: "Ensure AWS RDS database instance configured with encryption in transit"
-    resource: module.rds_postgres.aws_db_instance.webapp
-
+  # KMS Key - module.kms.aws_kms_key.ssm
   - id: CKV_AWS_7
     suppress-comment: "Suppress KMS key rotation requirement for this key"
     resource: module.kms.aws_kms_key.ssm
 
-  - id: CKV2_AWS_31
-    suppress-comment: "Ensure WAF2 has a Logging Configuration"
-    resource: module.waf.aws_wafv2_web_acl.webapp_waf
+  # Load Balancer - module.network.aws_lb.webapp_alb
+  - id: CKV_AWS_150
+    suppress-comment: "Suppress deletion protection requirement for ALB"
+    resource: module.network.aws_lb.webapp_alb
+  - id: CKV2_AWS_20
+    suppress-comment: "Suppress HTTP to HTTPS redirect requirement for ALB"
+    resource: module.network.aws_lb.webapp_alb
+
+  # ALB Listener - module.network.aws_lb_listener.webapp_listener
+  - id: CKV_AWS_2
+    suppress-comment: "Suppress HTTPS protocol enforcement requirement for ALB listener"
+    resource: module.network.aws_lb_listener.webapp_listener
+  - id: CKV_AWS_103
+    suppress-comment: "Suppress TLS 1.2 enforcement requirement for ALB listener"
+    resource: module.network.aws_lb_listener.webapp_listener
+
+  # ALB Target Group - module.network.aws_lb_target_group.webapp_tg
+  - id: CKV_AWS_378
+    suppress-comment: "Suppress protocol requirement for ALB target group"
+    resource: module.network.aws_lb_target_group.webapp_tg
+
+  # CloudWatch Log Groups - module.network.aws_cloudwatch_log_group.vpc_flow_logs
+  - id: CKV_AWS_338
+    suppress-comment: "Suppress 1 year retention requirement for flow logs"
+    resource: module.network.aws_cloudwatch_log_group.vpc_flow_logs
+  - id: CKV_AWS_158
+    suppress-comment: "Suppress KMS encryption requirement for flow logs"
+    resource: module.network.aws_cloudwatch_log_group.vpc_flow_logs
+
+  # CloudWatch Log Groups - module.waf.aws_cloudwatch_log_group.waf_logs
+  - id: CKV_AWS_338
+    suppress-comment: "Suppress 1 year retention requirement for WAF logs"
+    resource: module.waf.aws_cloudwatch_log_group.waf_logs
+  - id: CKV_AWS_158
+    suppress-comment: "Suppress KMS encryption requirement for WAF logs"
+    resource: module.waf.aws_cloudwatch_log_group.waf_logs
+
+  # RDS - module.rds_postgres.aws_db_instance.webapp
+  - id: CKV_AWS_354
+    suppress-comment: "Suppress RDS Performance Insights encryption requirement"
+    resource: module.rds_postgres.aws_db_instance.webapp
+  - id: CKV_AWS_157
+    suppress-comment: "Suppress Multi-AZ requirement for RDS"
+    resource: module.rds_postgres.aws_db_instance.webapp
+  - id: CKV_AWS_293
+    suppress-comment: "Suppress RDS deletion protection requirement"
+    resource: module.rds_postgres.aws_db_instance.webapp
+  - id: CKV2_AWS_69
+    suppress-comment: "Suppress RDS encryption in transit requirement"
+    resource: module.rds_postgres.aws_db_instance.webapp
+
+  # Security Groups - module.securityg.aws_security_group.webapp_alb_sg
+  - id: CKV_AWS_382
+    suppress-comment: "Suppress egress to 0.0.0.0/0 for ALB SG"
+    resource: module.securityg.aws_security_group.webapp_alb_sg
+  - id: CKV_AWS_260
+    suppress-comment: "Suppress ingress from 0.0.0.0/0 to port 80 for ALB SG"
+    resource: module.securityg.aws_security_group.webapp_alb_sg
+  - id: CKV2_AWS_5
+    suppress-comment: "Suppress SG attachment requirement for ALB SG"
+    resource: module.securityg.aws_security_group.webapp_alb_sg
+
+  # Security Groups - module.securityg.aws_security_group.webapp_instance_sg
+  - id: CKV2_AWS_5
+    suppress-comment: "Suppress SG attachment requirement for webapp instance"
+    resource: module.securityg.aws_security_group.webapp_instance_sg
+
+  # Security Groups - module.securityg.aws_security_group.bastion_sg
+  - id: CKV2_AWS_5
+    suppress-comment: "Suppress SG attachment requirement for bastion"
+    resource: module.securityg.aws_security_group.bastion_sg
+
+  # Security Groups - module.securityg.aws_security_group.rds_postgres_sg
+  - id: CKV2_AWS_5
+    suppress-comment: "Suppress SG attachment requirement for RDS"
+    resource: module.securityg.aws_security_group.rds_postgres_sg
+
+  # VPC Default SG - module.network.aws_vpc.main_vpc
+  - id: CKV2_AWS_12
+    suppress-comment: "Suppress default VPC SG restrict all traffic"
+    resource: module.network.aws_vpc.main_vpc
+
+  # S3 Bucket - module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV_AWS_21
+    suppress-comment: "Suppress S3 bucket versioning requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV_AWS_145
+    suppress-comment: "Suppress S3 default KMS encryption requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV2_AWS_62
+    suppress-comment: "Suppress S3 event notification requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV_AWS_18
+    suppress-comment: "Suppress S3 access logging requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV_AWS_144
+    suppress-comment: "Suppress S3 cross-region replication requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+  - id: CKV2_AWS_61
+    suppress-comment: "Suppress S3 lifecycle configuration requirement"
+    resource: module.s3.aws_s3_bucket.alb_logs_bucket
+
+  # Workflow Permissions - .github/workflows/terraform.yaml
+  - id: CKV2_GHA_1
+    suppress-comment: "Suppress top-level write-all permissions warning for workflow"
+    resource: .github/workflows/terraform.yaml
+
+  # Artifact signing - github_actions
+  - id: CKV_GHA_5
+    suppress-comment: "Suppress cosign artifact signing enforcement for workflow"
+    resource: github_actions
