@@ -27,6 +27,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Create SSH public key files
+        run: |
+          mkdir -p keys
+          echo "${{ secrets.BASTION_KEY_PUB }}" > keys/bastion_key.pub
+          echo "${{ secrets.WEB_INSTANCE_KEY_PUB }}" > keys/web_instance_key.pub
+
       - name: Terraform Init
         run: terraform init
 
