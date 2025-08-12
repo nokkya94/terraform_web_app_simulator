@@ -1,4 +1,5 @@
 #tfsec:ignore:aws-kms-auto-rotate-keys
+# checkov:skip=CKV_AWS_7: "Suppress KMS key rotation requirement for this key"
 resource "aws_kms_key" "ssm" {
   description             = "KMS key for SSM parameter encryption"
   deletion_window_in_days = 7

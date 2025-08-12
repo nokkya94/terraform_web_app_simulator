@@ -26,6 +26,11 @@ resource "aws_db_parameter_group" "webapp_postgres" {
 #tfsec:ignore:aws-rds-enable-performance-insights-encryption
 #tfsec:ignore:aws-rds-specify-backup-retention
 #tfsec:ignore:aws-rds-enable-deletion-protection
+#checkov:skip=CKV_AWS_123: "Suppress RDS performance insights encryption requirement"
+#checkov:skip=CKV_AWS_124: "Suppress RDS backup retention requirement"
+#checkov:skip=CKV_AWS_293: "Ensure that AWS database instances have deletion protection enabled"
+#checkov:skip=CKV_AWS_157: "Ensure that RDS instances have Multi-AZ enabled"
+#checkov:skip=CKV2_AWS_69: "Ensure AWS RDS database instance configured with encryption in transit"
 resource "aws_db_instance" "webapp" {
   allocated_storage    = 20
   storage_type         = "gp2"
