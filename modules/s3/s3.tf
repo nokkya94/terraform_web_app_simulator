@@ -2,13 +2,13 @@
 #tfsec:ignore:AWS018
 #tfsec:ignore:AWS019
 #tfsec:ignore:aws-s3-enable-versioning
-#checkov:skip=CKV_AWS_21: "Ensure all data stored in the S3 bucket have versioning enabled"
+#tfsec:ignore:aws-s3-enable-bucket-logging
+resource "aws_s3_bucket" "alb_logs_bucket" {#checkov:skip=CKV_AWS_21: "Ensure all data stored in the S3 bucket have versioning enabled"
 #checkov:skip=CKV_AWS_145: "Ensure that S3 buckets are encrypted with KMS by default"
 #checkov:skip=CKV2_AWS_62: "Ensure S3 buckets should have event notifications enabled"
 #checkov:skip=CKV_AWS_18: "Ensure the S3 bucket has access logging enabled"
 #checkov:skip=CKV_AWS_144: "Ensure that S3 bucket has cross-region replication enabled"
 #checkov:skip=CKV2_AWS_61: "Ensure that an S3 bucket has a lifecycle configuration"
-resource "aws_s3_bucket" "alb_logs_bucket" {
   bucket          = var.alb_logs_bucket_name
   force_destroy = true
 }

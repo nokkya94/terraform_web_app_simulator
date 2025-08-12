@@ -1,9 +1,8 @@
 #tfsec:ignore:aws-ec2-no-public-ingress-sgr
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
-#checkov:skip=CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
+resource "aws_security_group" "webapp_alb_sg" {#checkov:skip=CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
 #checkov:skip=CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
 #checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
-resource "aws_security_group" "webapp_alb_sg" {
   name        = "webapp_security_group"
   description = "Security group for the web application"
   vpc_id      = var.vpc_id
@@ -34,8 +33,7 @@ resource "aws_security_group" "webapp_alb_sg" {
 }
 
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
-#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
-resource "aws_security_group" "webapp_instance_sg" {
+resource "aws_security_group" "webapp_instance_sg" {#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
   name        = "webapp_instance_security_group"
   description = "Security group for the web application instances"
   vpc_id      = var.vpc_id

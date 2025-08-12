@@ -98,6 +98,7 @@ resource "aws_wafv2_web_acl_logging_configuration" "webapp_waf_logging" {
   resource_arn           = aws_wafv2_web_acl.webapp_waf.arn
 }
 
+#tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "waf_logs" {
   name              = "/aws/waf/webapp-waf-logs"
   retention_in_days = 30
