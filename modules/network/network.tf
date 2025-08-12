@@ -1,4 +1,3 @@
-#checkov:skip=CKV2_AWS_12: "Ensure the default security group of every VPC restricts all traffic"
 resource "aws_vpc" "main_vpc" {
   cidr_block = var.vpc_cidr_block
     tags = {
@@ -40,7 +39,7 @@ resource "aws_route_table_association" "route_table_association" {
 }
 
 #tfsec:ignore:aws-elb-alb-not-public
-resource "aws_lb" "webapp_alb" {#checkov:skip=CKV2_AWS_20: "Ensure that ALB redirects HTTP requests into HTTPS ones"
+resource "aws_lb" "webapp_alb" {
   name = "webapp-alb"
   internal = false
   load_balancer_type = "application"
@@ -57,7 +56,6 @@ resource "aws_lb" "webapp_alb" {#checkov:skip=CKV2_AWS_20: "Ensure that ALB redi
 
 }
 
-#checkov:skip=CKV_AWS_378: "Ensure AWS Load Balancer doesn't use HTTP protocol"
 resource "aws_lb_target_group" "webapp_tg" {
   name     = "webapp-tg"
   port     = 80
@@ -80,10 +78,7 @@ resource "aws_lb_target_group" "webapp_tg" {
 }
 
 #tfsec:ignore:aws-elb-http-not-used
-resource "aws_lb_listener" "webapp_listener" {#checkov:skip=CKV_AWS_88: "Suppress public IP warning for ALB"
-#checkov:skip=CKV_AWS_150: "Ensure that Load Balancer has deletion protection enabled"
-#checkov:skip=CKV_AWS_2: "Ensure ALB protocol is HTTPS"
-#checkov:skip=CKV_AWS_103: "Ensure that load balancer is using at least TLS 1.2"
+resource "aws_lb_listener" "webapp_listener" {
   load_balancer_arn = aws_lb.webapp_alb.arn
   port              = 80
   protocol          = "HTTP"
@@ -109,8 +104,7 @@ resource "aws_subnet" "private_subnet" {
 
 #tfsec:ignore:AWS089
 #tfsec:ignore:aws-cloudwatch-log-group-customer-key
-resource "aws_cloudwatch_log_group" "vpc_flow_logs" {#checkov:skip=CKV_AWS_338: "Ensure CloudWatch log groups retains logs for at least 1 year"
-#checkov:skip=CKV_AWS_158: "Ensure that CloudWatch Log Group is encrypted by KMS"
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flowlogs/${aws_vpc.main_vpc.id}"
   retention_in_days = 30
 }

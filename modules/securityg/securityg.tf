@@ -1,8 +1,6 @@
 #tfsec:ignore:aws-ec2-no-public-ingress-sgr
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
-resource "aws_security_group" "webapp_alb_sg" {#checkov:skip=CKV_AWS_260: "Ensure no security groups allow ingress from 0.0.0.0:0 to port 80"
-#checkov:skip=CKV_AWS_382: "Ensure no security groups allow egress from 0.0.0.0:0 to port -1"
-#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
+resource "aws_security_group" "webapp_alb_sg" {
   name        = "webapp_security_group"
   description = "Security group for the web application"
   vpc_id      = var.vpc_id
@@ -33,7 +31,7 @@ resource "aws_security_group" "webapp_alb_sg" {#checkov:skip=CKV_AWS_260: "Ensur
 }
 
 #tfsec:ignore:aws-ec2-no-public-egress-sgr
-resource "aws_security_group" "webapp_instance_sg" {#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
+resource "aws_security_group" "webapp_instance_sg" {
   name        = "webapp_instance_security_group"
   description = "Security group for the web application instances"
   vpc_id      = var.vpc_id
@@ -81,7 +79,6 @@ resource "aws_security_group_rule" "allow_ssh_from_bastion" {
   source_security_group_id = aws_security_group.bastion_sg.id
 }
 
-#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
 resource "aws_security_group" "bastion_sg" {
   name   = "bastion-sg"
   description = "Security group for the bastion host"
@@ -108,7 +105,6 @@ resource "aws_security_group" "bastion_sg" {
   }
 }
 
-#checkov:skip=CKV2_AWS_5: "Ensure that Security Groups are attached to another resource, this is a false positive,can’t see cross-module references properly."
 resource "aws_security_group" "rds_postgres_sg" {
   name        = "rds_postgres_sg"
   description = "Security group for RDS PostgreSQL"
