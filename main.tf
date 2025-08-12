@@ -25,6 +25,7 @@ module "securityg" {
   vpc_id                   = module.network.vpc_id
   ssh_my_ip                = var.ssh_my_ip
   rds_postgres_cidr_blocks = var.private_subnet_cidr_blocks
+  vpc_cidr_block           = var.vpc_cidr_block
 }
 
 module "iam" {

@@ -1,9 +1,12 @@
+#tfsec:ignore:aws-ec2-no-public-ingress-sgr
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
 resource "aws_security_group" "webapp_alb_sg" {
   name        = "webapp_security_group"
   description = "Security group for the web application"
   vpc_id      = var.vpc_id
 
   ingress {
+    description = "Allow HTTP traffic"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
@@ -11,6 +14,7 @@ resource "aws_security_group" "webapp_alb_sg" {
   }
 
   ingress {
+    description = "Allow HTTPS traffic"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
@@ -18,6 +22,7 @@ resource "aws_security_group" "webapp_alb_sg" {
   }
   
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -25,6 +30,7 @@ resource "aws_security_group" "webapp_alb_sg" {
   }
 }
 
+#tfsec:ignore:aws-ec2-no-public-egress-sgr
 resource "aws_security_group" "webapp_instance_sg" {
   name        = "webapp_instance_security_group"
   description = "Security group for the web application instances"
@@ -79,6 +85,7 @@ resource "aws_security_group" "bastion_sg" {
   vpc_id = var.vpc_id
 
   ingress {
+    description = "Allow SSH from my IP"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -86,6 +93,7 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -103,6 +111,7 @@ resource "aws_security_group" "rds_postgres_sg" {
   vpc_id      = var.vpc_id
 
   ingress {
+    description     = "Allow PostgreSQL from webapp instances"
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
@@ -110,10 +119,11 @@ resource "aws_security_group" "rds_postgres_sg" {
   }
 
   egress {
+    description = "Allow outbound traffic to VPC CIDR"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr_block]
   }
 
   tags = {

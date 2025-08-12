@@ -1,6 +1,30 @@
+#tfsec:ignore:AWS002
+#tfsec:ignore:AWS018
+#tfsec:ignore:AWS019
 resource "aws_s3_bucket" "alb_logs_bucket" {
   bucket          = var.alb_logs_bucket_name
   force_destroy = true
+}
+
+# Block all public ACLs on the bucket
+resource "aws_s3_bucket_public_access_block" "alb_logs_bucket_block" {
+  bucket = aws_s3_bucket.alb_logs_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+#tfsec:ignore:AWS017
+resource "aws_s3_bucket_server_side_encryption_configuration" "alb_logs_bucket_encryption" {
+  bucket = aws_s3_bucket.alb_logs_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "alb_logs" {

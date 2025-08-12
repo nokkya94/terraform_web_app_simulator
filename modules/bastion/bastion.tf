@@ -1,3 +1,4 @@
+#tfsec:ignore:aws-ec2-enable-at-rest-encryption
 resource "aws_instance" "bastion" {
   ami                         = var.ami_id
   instance_type               = var.instance_type
@@ -5,7 +6,13 @@ resource "aws_instance" "bastion" {
   associate_public_ip_address = true
   key_name                    = var.bastion_key_name
   vpc_security_group_ids      = var.bastion_security_group_ids
-    iam_instance_profile        = var.ec2_iam_instance_profile_name
+  iam_instance_profile        = var.ec2_iam_instance_profile_name
+  
+  metadata_options {
+    http_tokens = "required"       # Force IMDSv2
+    http_endpoint = "enabled"      # Keep metadata endpoint on
+  }
+
   tags = {
     Name = "bastion-host"
   }

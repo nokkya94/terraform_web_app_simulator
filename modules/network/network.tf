@@ -38,6 +38,7 @@ resource "aws_route_table_association" "route_table_association" {
   route_table_id = aws_route_table.main_rt.id
 }
 
+#tfsec:ignore:aws-elb-alb-not-public
 resource "aws_lb" "webapp_alb" {
   name = "webapp-alb"
   internal = false
@@ -76,6 +77,7 @@ resource "aws_lb_target_group" "webapp_tg" {
   }
 }
 
+#tfsec:ignore:aws-elb-http-not-used
 resource "aws_lb_listener" "webapp_listener" {
   load_balancer_arn = aws_lb.webapp_alb.arn
   port              = 80

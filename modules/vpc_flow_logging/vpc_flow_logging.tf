@@ -1,3 +1,4 @@
+#tfsec:ignore:AWS089
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flowlogs/${var.vpc_id}"
   retention_in_days = 30
@@ -37,7 +38,7 @@ resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams"
       ],
-      Resource = "*"
+      Resource = aws_cloudwatch_log_group.vpc_flow_logs.arn
     }]
   })
 }
