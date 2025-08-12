@@ -42,7 +42,6 @@ resource "aws_db_instance" "webapp" {
   skip_final_snapshot  = true
   auto_minor_version_upgrade = true
   storage_encrypted    = true
-  deletion_protection = false
   performance_insights_enabled = true
   performance_insights_retention_period = 7
   parameter_group_name = aws_db_parameter_group.webapp_postgres.name
