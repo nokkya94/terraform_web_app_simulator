@@ -43,9 +43,9 @@ module "compute" {
   alb_dns_name                  = module.network.alb_dns_name
   webapp_instance_key_name      = var.webapp_instance_key_name
   depends_on                    = [module.network]
-  rds_endpoint = module.rds_postgres.rds_endpoint
-  db_username  = var.db_username
-  db_password  = var.db_password
+  rds_endpoint                  = module.rds_postgres.rds_endpoint
+  db_username                   = var.db_username
+  db_password                   = var.db_password
 }
 
 module "bastion" {
@@ -60,7 +60,7 @@ module "bastion" {
 }
 
 resource "aws_lb_target_group_attachment" "webapp_attachment" {
-  count         = var.instance_count
+  count            = var.instance_count
   target_group_arn = module.network.alb_target_group_arn
   target_id        = module.compute.instance_ids[count.index]
   port             = 80
@@ -68,11 +68,11 @@ resource "aws_lb_target_group_attachment" "webapp_attachment" {
 }
 
 module "rds_postgres" {
-  source      = "./modules/rds_postgres"
-  subnet_ids  = module.network.private_subnet_ids
-  db_username = var.db_username
-  db_password = var.db_password
-  db_sg_id    = module.securityg.rds_postgres_sg_id
+  source                  = "./modules/rds_postgres"
+  subnet_ids              = module.network.private_subnet_ids
+  db_username             = var.db_username
+  db_password             = var.db_password
+  db_sg_id                = module.securityg.rds_postgres_sg_id
   rds_monitoring_role_arn = module.iam.rds_monitoring_role_arn
 }
 
