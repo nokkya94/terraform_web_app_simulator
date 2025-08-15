@@ -64,11 +64,6 @@ variable "webapp_instance_key_name" {
   type        = string
 }
 
-variable "bastion_key_name" {
-  description = "Key name for the bastion host"
-  type        = string
-}
-
 variable "db_username" {
   type        = string
   sensitive   = true

@@ -69,42 +69,6 @@ egress {
 }
 }
 
-resource "aws_security_group_rule" "allow_ssh_from_bastion" {
-  description = "Allow SSH from Bastion to WebApp Instances"
-  type                     = "ingress"
-  from_port                = 22
-  to_port                  = 22
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.webapp_instance_sg.id
-  source_security_group_id = aws_security_group.bastion_sg.id
-}
-
-resource "aws_security_group" "bastion_sg" {
-  name   = "bastion-sg"
-  description = "Security group for the bastion host"
-  vpc_id = var.vpc_id
-
-  ingress {
-    description = "Allow SSH from my IP"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.ssh_my_ip]
-  }
-
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [var.vpc_cidr_block]
-  }
-
-  tags = {
-    Name = "bastion-sg"
-  }
-}
-
 resource "aws_security_group" "rds_postgres_sg" {
   name        = "rds_postgres_sg"
   description = "Security group for RDS PostgreSQL"

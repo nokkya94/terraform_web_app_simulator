@@ -71,11 +71,6 @@ skip-check:
     suppress-comment: "Suppress SG attachment requirement for webapp instance"
     resource: module.securityg.aws_security_group.webapp_instance_sg
 
-  # Security Groups - module.securityg.aws_security_group.bastion_sg
-  - id: CKV2_AWS_5
-    suppress-comment: "Suppress SG attachment requirement for bastion"
-    resource: module.securityg.aws_security_group.bastion_sg
-
   # Security Groups - module.securityg.aws_security_group.rds_postgres_sg
   - id: CKV2_AWS_5
     suppress-comment: "Suppress SG attachment requirement for RDS"

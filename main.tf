@@ -23,7 +23,6 @@ module "kms" {
 module "securityg" {
   source                   = "./modules/securityg"
   vpc_id                   = module.network.vpc_id
-  ssh_my_ip                = var.ssh_my_ip
   rds_postgres_cidr_blocks = var.private_subnet_cidr_blocks
   vpc_cidr_block           = var.vpc_cidr_block
 }
@@ -47,17 +46,6 @@ module "compute" {
   rds_endpoint                  = module.rds_postgres.rds_endpoint
   db_username                   = var.db_username
   db_password                   = var.db_password
-}
-
-module "bastion" {
-  source                        = "./modules/bastion"
-  ec2_iam_instance_profile_name = module.iam.bastion_instance_profile
-  instance_type                 = var.instance_type
-  ami_id                        = data.aws_ssm_parameter.amazon_linux_2023.value
-  vpc_id                        = module.network.vpc_id
-  subnet_id                     = module.network.public_subnet_ids[0]
-  bastion_security_group_ids    = [module.securityg.bastion_sg_id]
-  bastion_key_name              = var.bastion_key_name
 }
 
 resource "aws_lb_target_group_attachment" "webapp_attachment" {
@@ -99,4 +87,8 @@ resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
 
 module "waf" {
   source = "./modules/waf"
+}
+
+module "ssm_session_manager" {
+  source = "./modules/ssm_session_manager"
 }

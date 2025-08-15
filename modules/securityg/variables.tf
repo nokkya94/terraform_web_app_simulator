@@ -6,9 +6,6 @@ variable "vpc_cidr_block" {
   type        = string
   description = "CIDR block for the VPC"
 }
-variable "ssh_my_ip" {
-  type        = string
-}
 variable "rds_postgres_cidr_blocks" {
   description = "List of CIDR blocks for RDS PostgreSQL security group"
   type        = list(string)
