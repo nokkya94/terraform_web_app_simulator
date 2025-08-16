@@ -124,10 +124,11 @@ jobs:
         run: checkov -c .checkov.yaml -d .
 
       - name: Install Trivy
-        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+        run: |
+          wget -qO- https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.50.2_Linux-64bit.tar.gz | tar zxvf - -C /usr/local/bin trivy
 
-      - name: Run Trivy SCA and IaC scan
-        run: ./trivy fs --scanners vuln,secret,config .
+      - name: Run Trivy
+        run: trivy fs --scanners vuln,secret,config .
 
       - name: Install Semgrep
         run: pip install semgrep
