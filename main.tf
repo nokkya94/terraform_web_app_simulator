@@ -77,7 +77,7 @@ module "aws_ssm_parameters" {
 module "s3" {
   source               = "./modules/s3"
   alb_logs_bucket_name = var.s3_bucket_with_alb_logs
-
+  environment          = var.environment
 }
 
 resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
@@ -89,6 +89,11 @@ module "waf" {
   source = "./modules/waf"
 }
 
-module "ssm_session_manager" {
-  source = "./modules/ssm_session_manager"
+module "guardduty" {
+  source = "./modules/guardduty"
+}
+
+module "aws_config" {
+  source = "./modules/aws_config"
+  depends_on = [module.s3]
 }

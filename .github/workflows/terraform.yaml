@@ -109,6 +109,11 @@ jobs:
       - name: Run Semgrep
         run: semgrep --config=auto .
 
+      - name: Run Gitleaks (Secret Detection)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+        args: --source=. --report-path=gitleaks-report.json
+
   dast:
     name: "DAST Scan"
     runs-on: ubuntu-latest
