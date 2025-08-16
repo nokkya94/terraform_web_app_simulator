@@ -94,7 +94,7 @@ module "guardduty" {
 }
 
 module "aws_config" {
-  source     = "./modules/aws_config"
+  source                   = "./modules/aws_config"
   s3_name_with_config_logs = module.s3.s3_name_with_config_logs
-  depends_on = [module.s3]
+  depends_on               = [module.s3]
 }
