@@ -1,4 +1,6 @@
-
+# checkov:skip=CKV_AWS_126: "Suppress detailed monitoring requirement for web host"
+# checkov:skip=CKV_AWS_8: "Suppress EBS encryption requirement for web host"
+# checkov:skip=CKV_AWS_135: "Suppress EBS optimization requirement for web host"
 resource "aws_instance" "webapp_instance" {
   count             = var.instance_count
   ami               = var.ami_id

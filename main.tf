@@ -23,8 +23,8 @@ module "kms" {
 module "securityg" {
   source                   = "./modules/securityg"
   vpc_id                   = module.network.vpc_id
-  ssh_my_ip                = var.ssh_my_ip
   rds_postgres_cidr_blocks = var.private_subnet_cidr_blocks
+  vpc_cidr_block           = var.vpc_cidr_block
 }
 
 module "iam" {
@@ -43,24 +43,13 @@ module "compute" {
   alb_dns_name                  = module.network.alb_dns_name
   webapp_instance_key_name      = var.webapp_instance_key_name
   depends_on                    = [module.network]
-  rds_endpoint = module.rds_postgres.rds_endpoint
-  db_username  = var.db_username
-  db_password  = var.db_password
-}
-
-module "bastion" {
-  source                        = "./modules/bastion"
-  ec2_iam_instance_profile_name = module.iam.bastion_instance_profile
-  instance_type                 = var.instance_type
-  ami_id                        = data.aws_ssm_parameter.amazon_linux_2023.value
-  vpc_id                        = module.network.vpc_id
-  subnet_id                     = module.network.public_subnet_ids[0]
-  bastion_security_group_ids    = [module.securityg.bastion_sg_id]
-  bastion_key_name              = var.bastion_key_name
+  rds_endpoint                  = module.rds_postgres.rds_endpoint
+  db_username                   = var.db_username
+  db_password                   = var.db_password
 }
 
 resource "aws_lb_target_group_attachment" "webapp_attachment" {
-  count         = var.instance_count
+  count            = var.instance_count
   target_group_arn = module.network.alb_target_group_arn
   target_id        = module.compute.instance_ids[count.index]
   port             = 80
@@ -68,11 +57,11 @@ resource "aws_lb_target_group_attachment" "webapp_attachment" {
 }
 
 module "rds_postgres" {
-  source      = "./modules/rds_postgres"
-  subnet_ids  = module.network.private_subnet_ids
-  db_username = var.db_username
-  db_password = var.db_password
-  db_sg_id    = module.securityg.rds_postgres_sg_id
+  source                  = "./modules/rds_postgres"
+  subnet_ids              = module.network.private_subnet_ids
+  db_username             = var.db_username
+  db_password             = var.db_password
+  db_sg_id                = module.securityg.rds_postgres_sg_id
   rds_monitoring_role_arn = module.iam.rds_monitoring_role_arn
 }
 
@@ -88,7 +77,7 @@ module "aws_ssm_parameters" {
 module "s3" {
   source               = "./modules/s3"
   alb_logs_bucket_name = var.s3_bucket_with_alb_logs
-
+  environment          = var.environment
 }
 
 resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
@@ -100,7 +89,12 @@ module "waf" {
   source = "./modules/waf"
 }
 
-module "vpc_flow_logs" {
-  source = "./modules/vpc_flow_logging"
-  vpc_id = module.network.vpc_id
+module "guardduty" {
+  source = "./modules/guardduty"
+}
+
+module "aws_config" {
+  source                   = "./modules/aws_config"
+  s3_name_with_config_logs = module.s3.s3_name_with_config_logs
+  depends_on               = [module.s3]
 }
