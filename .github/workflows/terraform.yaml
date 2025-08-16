@@ -10,6 +10,7 @@ jobs:
   terraform:
     name: "Terraform Workflow"
     runs-on: ubuntu-latest
+    environment: dev # <-- Specify the environment here
 
     steps:
       - name: Checkout code
@@ -34,6 +35,15 @@ jobs:
 
       - name: Terraform Init
         run: terraform init
+        env:
+          # Pass all TF_VAR_ variables and secrets
+          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
+          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
+          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
+          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -51,10 +61,26 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan -out=tfplan
+        env:
+          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
+          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
+          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
+          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
 
       - name: Terraform Apply (main branch only)
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
+          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
+          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
+          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
 
       - name: Get ALB URL from Terraform output (main branch only)
         if: github.ref == 'refs/heads/main'
@@ -80,6 +106,7 @@ jobs:
     name: "SCA & SAST"
     runs-on: ubuntu-latest
     needs: terraform
+    environment: dev
 
     steps:
       - name: Checkout code
@@ -119,6 +146,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform
     if: github.ref == 'refs/heads/main'
+    environment: dev
 
     steps:
       - name: Checkout code
@@ -141,7 +169,4 @@ jobs:
           echo "ALB did not become ready in time."
           exit 1
 
-      - name: Run OWASP ZAP DAST scan
-        uses: zaproxy/action-full-scan@v0.11.0
-        with:
-          target: "http://${{ env.ALB_URL }}"
+      - name: Run OWASP ZAP DAST
