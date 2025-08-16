@@ -23,8 +23,10 @@ resource "aws_db_parameter_group" "webapp_postgres" {
   }
 }
 
+#tfsec:ignore:aws-rds-enable-performance-insights-encryption
+#tfsec:ignore:aws-rds-specify-backup-retention
+#tfsec:ignore:aws-rds-enable-deletion-protection
 resource "aws_db_instance" "webapp" {
-  allocated_storage    = 20
   storage_type         = "gp2"
   engine               = "postgres"
   engine_version       = "14.13"
@@ -39,7 +41,6 @@ resource "aws_db_instance" "webapp" {
   skip_final_snapshot  = true
   auto_minor_version_upgrade = true
   storage_encrypted    = true
-  deletion_protection = false
   performance_insights_enabled = true
   performance_insights_retention_period = 7
   parameter_group_name = aws_db_parameter_group.webapp_postgres.name

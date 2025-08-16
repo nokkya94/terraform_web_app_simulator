@@ -10,6 +10,7 @@ jobs:
   terraform:
     name: "Terraform Workflow"
     runs-on: ubuntu-latest
+    environment: dev # <-- Specify the environment here
 
     steps:
       - name: Checkout code
@@ -27,8 +28,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Create SSH public key files
+        run: |
+          mkdir -p keys
+          echo "${{ secrets.WEB_INSTANCE_KEY_PUB }}" > keys/web_instance_key.pub
+
       - name: Terraform Init
         run: terraform init
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -44,9 +58,61 @@ jobs:
       - name: Run tflint
         run: tflint --disable-rule=terraform_documented_variables
 
-      - name: Install tfsec
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+
+      - name: Terraform Apply (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+
+      - name: Get ALB URL from Terraform output (main branch only)
+        if: github.ref == 'refs/heads/main'
+        id: get_alb
+        run: echo "ALB_URL=$(terraform output -raw alb_dns_name)" >> $GITHUB_ENV
+
+      - name: Wait for ALB to be ready (main branch only)
+        if: github.ref == 'refs/heads/main'
         run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+          for i in {1..30}; do
+            if curl -sSf "http://${{ env.ALB_URL }}"; then
+              echo "ALB is ready!"
+              exit 0
+            else
+              echo "Waiting for ALB... ($i/30)"
+              sleep 20
+            fi
+          done
+          echo "ALB did not become ready in time."
+          exit 1
+
+  security:
+    name: "SCA & SAST"
+    runs-on: ubuntu-latest
+    needs: terraform
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install tfsec
+        run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
       - name: Run tfsec
         run: tfsec .
@@ -55,11 +121,66 @@ jobs:
         run: pip install checkov
 
       - name: Run Checkov
-        run: checkov -d .
+        run: checkov -c .checkov.yaml -d .
 
-      - name: Terraform Plan
-        run: terraform plan -out=tfplan
+      - name: Install Trivy
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep '"tag_name":' | head -n 1 | cut -d '"' -f4)
+          VERSION=${LATEST#v}
+          echo "Latest Trivy version: $LATEST"
+          wget https://github.com/aquasecurity/trivy/releases/download/${LATEST}/trivy_${VERSION}_Linux-64bit.tar.gz
+          tar -xzf trivy_${VERSION}_Linux-64bit.tar.gz
+          sudo mv trivy /usr/local/bin/
 
-      - name: Terraform Apply (only on push to main)
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve tfplan
+      - name: Run Trivy
+        run: trivy fs --scanners vuln,secret,config .
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep
+        run: semgrep --config=auto .
+
+      - name: Install Gitleaks
+        run: |
+          wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
+          tar -xzf gitleaks_8.24.3_linux_x64.tar.gz
+          sudo mv gitleaks /usr/local/bin/
+
+      - name: Run Gitleaks (Secret Detection)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gitleaks detect --source=. --report-path=gitleaks-report.json
+
+  dast:
+    name: "DAST Scan"
+    runs-on: ubuntu-latest
+    needs: terraform
+    if: github.ref == 'refs/heads/main'
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get ALB URL from Terraform output
+        run: echo "ALB_URL=$(terraform output -raw alb_dns_name)" >> $GITHUB_ENV
+
+      - name: Wait for ALB to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sSf "http://${{ env.ALB_URL }}"; then
+              echo "ALB is ready!"
+              exit 0
+            else
+              echo "Waiting for ALB... ($i/30)"
+              sleep 20
+            fi
+          done
+          echo "ALB did not become ready in time."
+          exit 1
+
+      - name: Run OWASP ZAP DAST
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "http://${{ env.ALB_URL }}"
