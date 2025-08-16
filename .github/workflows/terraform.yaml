@@ -170,3 +170,6 @@ jobs:
           exit 1
 
       - name: Run OWASP ZAP DAST
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: "http://${{ env.ALB_URL }}"
