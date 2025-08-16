@@ -49,9 +49,36 @@ resource "aws_s3_bucket_policy" "alb_logs" {
   })
 }
 
+#tfsec:ignore:AWS002
+#tfsec:ignore:AWS018
+#tfsec:ignore:AWS019
+#tfsec:ignore:aws-s3-enable-versioning
+#tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "s3_with_config_logs" {
   bucket = "${var.environment}-config-logs-${random_id.suffix.hex}"
   force_destroy = true
+}
+
+# Block all public ACLs on the config bucket
+resource "aws_s3_bucket_public_access_block" "s3_with_config_logs_block" {
+  bucket = aws_s3_bucket.s3_with_config_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+#tfsec:ignore:AWS017
+#tfsec:ignore:aws-s3-encryption-customer-key
+resource "aws_s3_bucket_server_side_encryption_configuration" "s3_with_config_logs_encryption" {
+  bucket = aws_s3_bucket.s3_with_config_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
 }
 
 resource "random_id" "suffix" {

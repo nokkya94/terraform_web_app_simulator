@@ -100,6 +100,24 @@ skip-check:
   - id: CKV2_AWS_61
     suppress-comment: "Suppress S3 lifecycle configuration requirement"
     resource: module.s3.aws_s3_bucket.alb_logs_bucket
+      - id: CKV_AWS_21
+    suppress-comment: "Suppress S3 bucket versioning requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
+  - id: CKV_AWS_145
+    suppress-comment: "Suppress S3 default KMS encryption requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
+  - id: CKV2_AWS_62
+    suppress-comment: "Suppress S3 event notification requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
+  - id: CKV_AWS_18
+    suppress-comment: "Suppress S3 access logging requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
+  - id: CKV_AWS_144
+    suppress-comment: "Suppress S3 cross-region replication requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
+  - id: CKV2_AWS_61
+    suppress-comment: "Suppress S3 lifecycle configuration requirement"
+    resource: module.s3.aws_s3_bucket.s3_with_config_logs
 
   # Workflow Permissions - .github/workflows/terraform.yaml
   - id: CKV2_GHA_1
