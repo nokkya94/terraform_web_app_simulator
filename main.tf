@@ -94,6 +94,6 @@ module "guardduty" {
 }
 
 module "aws_config" {
-  source = "./modules/aws_config"
+  source     = "./modules/aws_config"
   depends_on = [module.s3]
 }
