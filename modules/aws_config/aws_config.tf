@@ -25,7 +25,7 @@ resource "aws_iam_role_policy_attachment" "config_policy" {
 
 resource "aws_config_delivery_channel" "main_config_channel" {
   name           = "main_config_channel"
-  s3_bucket_name = aws_s3_bucket.config_logs.bucket
+  s3_bucket_name = var.s3_name_with_config_logs
   depends_on     = [aws_config_configuration_recorder.main_config_recorder]
 }
 
