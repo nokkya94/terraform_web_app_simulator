@@ -36,14 +36,13 @@ jobs:
       - name: Terraform Init
         run: terraform init
         env:
-          # Pass all TF_VAR_ variables and secrets
-          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
-          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
-          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
-          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
-          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
-          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
-          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -62,25 +61,25 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -out=tfplan
         env:
-          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
-          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
-          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
-          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
-          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
-          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
-          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
 
       - name: Terraform Apply (main branch only)
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
         env:
-          TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
-          TF_VAR_DB_USERNAME: ${{ vars.TF_VAR_DB_USERNAME }}
-          TF_VAR_ENVIRONMENT: ${{ vars.TF_VAR_ENVIRONMENT }}
-          TF_VAR_S3_BUCKET_WITH_ALB_LOGS: ${{ vars.TF_VAR_S3_BUCKET_WITH_ALB_LOGS }}
-          TF_VAR_WEBAPP_INSTANCE_KEY_NAME: ${{ vars.TF_VAR_WEBAPP_INSTANCE_KEY_NAME }}
-          TF_VAR_IAM_ROLE_NAME: ${{ secrets.TF_VAR_IAM_ROLE_NAME }}
-          TF_VAR_IAM_USER_NAME: ${{ secrets.TF_VAR_IAM_USER_NAME }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
 
       - name: Get ALB URL from Terraform output (main branch only)
         if: github.ref == 'refs/heads/main'
