@@ -100,7 +100,7 @@ skip-check:
   - id: CKV2_AWS_61
     suppress-comment: "Suppress S3 lifecycle configuration requirement"
     resource: module.s3.aws_s3_bucket.alb_logs_bucket
-      - id: CKV_AWS_21
+  - id: CKV_AWS_21
     suppress-comment: "Suppress S3 bucket versioning requirement"
     resource: module.s3.aws_s3_bucket.s3_with_config_logs
   - id: CKV_AWS_145
