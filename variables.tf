@@ -23,19 +23,6 @@ variable "private_subnet_cidr_blocks" {
 
 }
 
-# variable "backend_bucket_name" {
-#   description = "The name of the S3 bucket for storing Terraform state files"
-#   type        = string
-# }
-# variable "dynamodb_table_name" {
-#   description = "The name of the DynamoDB table for state locking"
-#   type        = string
-#   validation {
-#     condition     = can(regex("^[a-z0-9-]{3,63}$", var.dynamodb_table_name))
-#     error_message = "DynamoDB table name must be lowercase and between 3 and 63 characters long."
-#   }
-# }
-
 variable "instance_count" {
   description = "Number of instances to launch"
   type        = number
@@ -44,19 +31,6 @@ variable "instance_type" {
   description = "Instance type for the instances"
   type        = string
   default     = "t3.micro"
-}
-#### below are commented out variables that can be used for IAM user and role management for remote state management
-# variable "iam_user_name" {
-#   description = "IAM username that Terraform should grant access to"
-#   type        = string
-# }
-# variable "iam_role_name" {
-#   description = "IAM role name for Terraform operations"
-#   type        = string
-# }
-variable "ssh_my_ip" {
-  description = "Your IP address in CIDR notation for SSH access"
-  type        = string
 }
 
 variable "webapp_instance_key_name" {
