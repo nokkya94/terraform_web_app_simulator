@@ -67,6 +67,7 @@ egress {
   protocol    = "tcp"
   cidr_blocks = var.rds_postgres_cidr_blocks
 }
+
 }
 
 resource "aws_security_group" "rds_postgres_sg" {
