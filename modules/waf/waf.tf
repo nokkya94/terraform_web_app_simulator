@@ -48,7 +48,7 @@ resource "aws_wafv2_web_acl" "webapp_waf" {
   }
    rule {
     name     = "AWS-AWSManagedRulesKnownBadInputsRuleSet"
-    priority = 1
+    priority = 3
     override_action {
       none {}
     }
@@ -68,7 +68,7 @@ resource "aws_wafv2_web_acl" "webapp_waf" {
   # add a custom rule to block Log4j attempts:
   rule {
     name     = "Block-Log4j-Exploit"
-    priority = 2
+    priority = 4
     action {
       block {}
     }
