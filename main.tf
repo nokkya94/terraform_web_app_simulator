@@ -89,9 +89,10 @@ module "waf" {
   source = "./modules/waf"
 }
 
-module "guardduty" {
-  source = "./modules/guardduty"
-}
+# commenting now for cost optimization
+# module "guardduty" {
+#   source = "./modules/guardduty"
+# }
 
 module "aws_config" {
   source                   = "./modules/aws_config"
