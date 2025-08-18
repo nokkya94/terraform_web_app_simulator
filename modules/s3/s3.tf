@@ -55,7 +55,7 @@ resource "aws_s3_bucket_policy" "alb_logs" {
 #tfsec:ignore:aws-s3-enable-versioning
 #tfsec:ignore:aws-s3-enable-bucket-logging
 resource "aws_s3_bucket" "s3_with_config_logs" {
-  bucket = "${var.environment}-config-logs-${random_id.suffix.hex}"
+  bucket = "${var.environment}-config-logs-avertech0"
   force_destroy = true
 }
 
