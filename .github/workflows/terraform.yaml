@@ -43,6 +43,8 @@ jobs:
           TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
           TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
           TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+          TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
+          TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -68,6 +70,8 @@ jobs:
           TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
           TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
           TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+          TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
+          TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
       - name: Terraform Apply (main branch only)
         if: github.ref == 'refs/heads/main'
@@ -80,6 +84,8 @@ jobs:
           TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
           TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
           TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+          TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
+          TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
       - name: Get ALB URL from Terraform output (main branch only)
         if: github.ref == 'refs/heads/main'
