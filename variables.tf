@@ -59,18 +59,3 @@ variable "s3_bucket_with_alb_logs" {
   type        = string
   description = "S3 bucket name for storing ALB logs"
 }
-
-variable "backend_state_bucket_name" {
-  description = "S3 bucket name for storing Terraform state files"
-  type        = string
-}
-
-variable "dynamodb_state_table_name" {
-  description = "DynamoDB table name for storing Terraform state locks"
-  type        = string
-}
-
-variable "iam_role_name" {
-  description = "IAM role name for Terraform"
-  type        = string
-}
