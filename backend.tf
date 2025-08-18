@@ -1,5 +1,5 @@
 terraform {
-   backend "s3" {
+  backend "s3" {
     bucket         = "my-terraform-state-bucket-7748123"
     key            = "state/terraform.tfstate"
     region         = "us-east-1"
@@ -9,7 +9,7 @@ terraform {
 }
 
 resource "aws_s3_bucket" "tf_state" {
-  bucket = var.backend_state_bucket_name
+  bucket        = var.backend_state_bucket_name
   force_destroy = true
   tags = {
     Name = "TerraformStateBucket"
@@ -67,10 +67,10 @@ resource "aws_kms_key" "terraform_state_key" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Id = "terraform-kms-policy"
+    Id      = "terraform-kms-policy"
     Statement = [
       {
-        Sid = "Allow account access"
+        Sid    = "Allow account access"
         Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
@@ -81,7 +81,7 @@ resource "aws_kms_key" "terraform_state_key" {
         Resource = "*"
       },
       {
-        Sid = "Allow Terraform IAM role or user access"
+        Sid    = "Allow Terraform IAM role or user access"
         Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.iam_role_name}"
