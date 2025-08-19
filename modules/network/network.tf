@@ -105,7 +105,7 @@ resource "aws_subnet" "private_subnet" {
 #tfsec:ignore:AWS089
 #tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/flowlogs/${aws_vpc.main_vpc.id}"
+  name              = "/aws/vpc/flowlogs/main-vpc"
   retention_in_days = 30
 }
 
