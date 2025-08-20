@@ -9,18 +9,41 @@ resource "aws_config_configuration_recorder" "main_config_recorder" {
 resource "aws_iam_role" "config_role" {
   name = "aws-config-role"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow",
-      Principal = { Service = "config.amazonaws.com" },
+      Effect = "Allow"
+      Principal = { Service = "config.amazonaws.com" }
       Action = "sts:AssumeRole"
     }]
   })
 }
 
+# Inline policy for S3 access
+resource "aws_iam_role_policy" "config_s3_access" {
+  name = "aws-config-s3-access"
+  role = aws_iam_role.config_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetBucketAcl",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::dev-config-logs-avertech0",
+          "arn:aws:s3:::dev-config-logs-avertech0/*"
+        ]
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "config_policy" {
   role       = aws_iam_role.config_role.name
-  policy_arn = "arn:aws:iam::aws:policy/aws-service-role/AWSConfigServiceRolePolicy"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSConfigServiceRolePolicy"
 }
 
 resource "aws_config_delivery_channel" "main_config_channel" {
