@@ -94,8 +94,11 @@ resource "aws_wafv2_web_acl" "webapp_waf" {
 }
 
 resource "aws_wafv2_web_acl_logging_configuration" "webapp_waf_logging" {
-  log_destination_configs = [aws_cloudwatch_log_group.waf_logs.arn]
-  resource_arn           = aws_wafv2_web_acl.webapp_waf.arn
+   log_destination_configs = [
+    replace(aws_cloudwatch_log_group.waf_logs.arn, ":*", "")
+  ]
+    resource_arn           = aws_wafv2_web_acl.webapp_waf.arn
+    depends_on = [aws_cloudwatch_log_resource_policy.waf_logging_policy]
 }
 
 #tfsec:ignore:aws-cloudwatch-log-group-customer-key
@@ -103,3 +106,26 @@ resource "aws_cloudwatch_log_group" "waf_logs" {
   name              = "/aws/waf/webapp-waf-logs"
   retention_in_days = 30
 }
+
+# Attach a resource policy to the log group so WAF can write logs
+resource "aws_cloudwatch_log_resource_policy" "waf_logging_policy" {
+  policy_name     = "waf-logging-policy"
+  policy_document = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AWSWAFLoggingPermissions",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "waf.amazonaws.com"
+      },
+      "Action": "logs:PutLogEvents",
+      "Resource": "arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/waf/webapp-waf-logs:*"
+    }
+  ]
+}
+EOF
+}
+
+data "aws_caller_identity" "current" {}

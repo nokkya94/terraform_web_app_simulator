@@ -84,3 +84,27 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "s3_with_config_lo
 resource "random_id" "suffix" {
   byte_length = 4
 }
+
+resource "aws_s3_bucket_policy" "config_logs" {
+  bucket = aws_s3_bucket.s3_with_config_logs.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid = "AWSConfigPermissions",
+        Effect = "Allow",
+        Principal = {
+          Service = "config.amazonaws.com"
+        },
+        Action = "s3:PutObject",
+        Resource = "arn:aws:s3:::${aws_s3_bucket.s3_with_config_logs.id}/*",
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-acl" = "bucket-owner-full-control"
+          }
+        }
+      }
+    ]
+  })
+}
