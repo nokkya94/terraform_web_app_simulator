@@ -87,6 +87,7 @@ resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
 
 module "waf" {
   source = "./modules/waf"
+  region = var.aws_region
 }
 
 # commenting now for cost optimization
