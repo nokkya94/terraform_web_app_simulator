@@ -104,6 +104,14 @@ resource "aws_s3_bucket_policy" "config_logs" {
             "s3:x-amz-acl" = "bucket-owner-full-control"
           }
         }
+      },
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "config.amazonaws.com"
+        },
+        Action = "s3:GetBucketAcl",
+        Resource = "arn:aws:s3:::${aws_s3_bucket.s3_with_config_logs.id}"
       }
     ]
   })
