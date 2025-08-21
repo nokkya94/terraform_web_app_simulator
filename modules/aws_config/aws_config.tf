@@ -8,12 +8,16 @@ resource "aws_iam_service_linked_role" "config" {
 
 # Config recorder (uses the service-linked role ARN)
 resource "aws_config_configuration_recorder" "main_config_recorder" {
-  name     = "main_config_recorder"
-  role_arn = aws_iam_service_linked_role.config.arn
+  name = "main_config_recorder"
+
+  # Hardcode the service-linked role ARN (well-known pattern)
+  role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig"
 
   recording_group {
     all_supported = true
   }
+
+  depends_on = [aws_iam_service_linked_role.config]
 }
 
 # Delivery channel (stores Config data in S3 bucket)
