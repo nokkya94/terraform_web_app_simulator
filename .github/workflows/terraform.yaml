@@ -12,14 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev # <-- Specify the environment here
 
+    outputs:
+      alb_url: ${{ steps.get_alb.outputs.alb_url }}
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.8.3
+          terraform_version: 1.8.5
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -90,13 +93,13 @@ jobs:
       - name: Get ALB URL from Terraform output (main branch only)
         if: github.ref == 'refs/heads/main'
         id: get_alb
-        run: echo "ALB_URL=$(terraform output -raw alb_dns_name)" >> $GITHUB_ENV
+        run: echo "alb_url=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
 
       - name: Wait for ALB to be ready (main branch only)
         if: github.ref == 'refs/heads/main'
         run: |
           for i in {1..30}; do
-            if curl -sSf "http://${{ env.ALB_URL }}"; then
+            if curl -sSf "http://${{ steps.get_alb.outputs.alb_url }}" ; then
               echo "ALB is ready!"
               exit 0
             else
@@ -159,23 +162,20 @@ jobs:
         run: gitleaks detect --source=. --report-path=gitleaks-report.json
 
   dast:
-    name: "DAST Scan"
     runs-on: ubuntu-latest
     needs: terraform
     if: github.ref == 'refs/heads/main'
     environment: dev
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Get ALB URL from Terraform output
-        run: echo "ALB_URL=$(terraform output -raw alb_dns_name)" >> $GITHUB_ENV
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Wait for ALB to be ready
         run: |
+          echo "Waiting for ALB: http://${{ needs.terraform.outputs.alb_url }}"
           for i in {1..30}; do
-            if curl -sSf "http://${{ env.ALB_URL }}"; then
+            if curl -sSf "http://${{ needs.terraform.outputs.alb_url }}" > /dev/null; then
               echo "ALB is ready!"
               exit 0
             else
@@ -189,4 +189,4 @@ jobs:
       - name: Run OWASP ZAP DAST
         uses: zaproxy/action-baseline@v0.10.0
         with:
-          target: "http://${{ env.ALB_URL }}"
+          target: "http://${{ needs.terraform.outputs.alb_url }}"
