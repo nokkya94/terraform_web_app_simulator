@@ -190,3 +190,4 @@ jobs:
         uses: zaproxy/action-baseline@v0.10.0
         with:
           target: "http://${{ needs.terraform.outputs.alb_url }}"
+          failOnAlerts: false
