@@ -27,7 +27,7 @@ jobs:
       # -soft-fail=false and no continue-on-error.
       # This means if any CIS violation occurs infra job won't execute
       - name: Run tfsec
-        run: tfsec . --soft-fail=false
+        run: tfsec .
 
       - name: Install Checkov
         run: pip install checkov
