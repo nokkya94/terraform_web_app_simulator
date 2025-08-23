@@ -109,6 +109,7 @@ resource "aws_wafv2_web_acl_logging_configuration" "webapp_waf_logging" {
 resource "aws_cloudwatch_log_group" "waf_logs" {
   name              = "aws-waf-logs-webapp"
   retention_in_days = 30
+  kms_key_id = var.cloudwatch_logs_kms_key_arn
 }
 
 # Attach a resource policy to the log group so WAF can write logs

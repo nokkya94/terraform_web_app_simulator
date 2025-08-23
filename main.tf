@@ -7,13 +7,14 @@ data "aws_availability_zones" "available" {
 }
 
 module "network" {
-  source                     = "./modules/network"
-  vpc_cidr_block             = var.vpc_cidr_block
-  public_subnet_cidr_blocks  = var.public_subnet_cidr_blocks
-  private_subnet_cidr_blocks = var.private_subnet_cidr_blocks
-  availability_zones         = data.aws_availability_zones.available.names
-  alb_security_group_id      = [module.securityg.webapp_alb_sg_id]
-  alb_logs_bucket_name       = module.s3.s3_bucket_with_alb_logs
+  source                      = "./modules/network"
+  vpc_cidr_block              = var.vpc_cidr_block
+  public_subnet_cidr_blocks   = var.public_subnet_cidr_blocks
+  private_subnet_cidr_blocks  = var.private_subnet_cidr_blocks
+  availability_zones          = data.aws_availability_zones.available.names
+  alb_security_group_id       = [module.securityg.webapp_alb_sg_id]
+  alb_logs_bucket_name        = module.s3.s3_bucket_with_alb_logs
+  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
 }
 
 module "kms" {
@@ -86,8 +87,9 @@ resource "aws_wafv2_web_acl_association" "webapp_waf_assoc" {
 }
 
 module "waf" {
-  source = "./modules/waf"
-  region = var.aws_region
+  source                      = "./modules/waf"
+  region                      = var.aws_region
+  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
 }
 
 # commenting now for cost optimization
@@ -99,4 +101,14 @@ module "aws_config" {
   source                   = "./modules/aws_config"
   s3_name_with_config_logs = module.s3.s3_name_with_config_logs
   depends_on               = [module.s3]
+}
+
+module "scp_policies" {
+  source = "./modules/scp_policies"
+}
+
+module "vpc_flow_logs" {
+  source                      = "./modules/vpc_flow_logs"
+  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
+  vpc_id                      = module.network.vpc_id
 }

@@ -107,6 +107,7 @@ resource "aws_subnet" "private_subnet" {
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name              = "/aws/vpc/flowlogs/main-vpc"
   retention_in_days = 30
+  kms_key_id = var.cloudwatch_logs_kms_key_arn
 }
 
 resource "aws_flow_log" "main_vpc_flow_log" {

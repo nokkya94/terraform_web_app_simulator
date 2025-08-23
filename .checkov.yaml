@@ -128,3 +128,20 @@ skip-check:
   - id: CKV_GHA_5
     suppress-comment: "Suppress cosign artifact signing enforcement for workflow"
     resource: github_actions
+
+framework: terraform
+download-external-modules: true
+quiet: true
+#CIS checks enforced
+checks:
+  - CKV_AWS_1 # Example: Ensure CloudTrail is enabled in all regions
+  - CKV_AWS_3 # Ensure S3 buckets are encrypted
+  - CKV_AWS_19 # Ensure CloudWatch log groups are encrypted
+  - CKV_AWS_56 # Ensure S3 bucket is not publicly readable
+  - CKV_AWS_57 # Ensure S3 bucket is not publicly writable
+  - CKV_AWS_33 # Ensure VPC Flow Logs are enabled
+  # - CKV_AWS_40 # Ensure IAM password policy requires at least one uppercase
+  # - CKV_AWS_41 # Ensure IAM password policy requires at least one lowercase
+  # - CKV_AWS_42 # Ensure IAM password policy requires at least one symbol
+  # - CKV_AWS_43 # Ensure IAM password policy requires at least one number
+  # - CKV_AWS_44 # Ensure IAM password policy requires minimum length of 14
