@@ -26,7 +26,7 @@ jobs:
         run: curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
 
       # -soft-fail=false and no continue-on-error.
-      # This means if any CIS violation occurs, Terraform plan won’t even execute.
+      # This means if any CIS violation occurs infra job won't execute
       - name: Run tfsec
         run: tfsec . --soft-fail=false
 
@@ -123,7 +123,6 @@ jobs:
         run: tflint --disable-rule=terraform_documented_variables
 
       - name: Terraform Plan
-        if: success() # <-- only runs if tfsec/checkov passed
         run: terraform plan -out=tfplan
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
