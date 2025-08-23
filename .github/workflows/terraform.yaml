@@ -30,7 +30,7 @@ jobs:
         run: tfsec .
 
       - name: Install Checkov
-        run: pip install checkov
+        run: pip install --upgrade checkov
 
       - name: Run Checkov
         run: checkov -c .checkov.yaml -d .
