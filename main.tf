@@ -7,13 +7,14 @@ data "aws_availability_zones" "available" {
 }
 
 module "network" {
-  source                     = "./modules/network"
-  vpc_cidr_block             = var.vpc_cidr_block
-  public_subnet_cidr_blocks  = var.public_subnet_cidr_blocks
-  private_subnet_cidr_blocks = var.private_subnet_cidr_blocks
-  availability_zones         = data.aws_availability_zones.available.names
-  alb_security_group_id      = [module.securityg.webapp_alb_sg_id]
-  alb_logs_bucket_name       = module.s3.s3_bucket_with_alb_logs
+  source                      = "./modules/network"
+  vpc_cidr_block              = var.vpc_cidr_block
+  public_subnet_cidr_blocks   = var.public_subnet_cidr_blocks
+  private_subnet_cidr_blocks  = var.private_subnet_cidr_blocks
+  availability_zones          = data.aws_availability_zones.available.names
+  alb_security_group_id       = [module.securityg.webapp_alb_sg_id]
+  alb_logs_bucket_name        = module.s3.s3_bucket_with_alb_logs
+  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
 }
 
 module "kms" {
@@ -104,10 +105,4 @@ module "aws_config" {
 # commenting now as it incurs costs
 module "scp_policies" {
   source = "./modules/scp_policies"
-}
-
-module "vpc_flow_logs" {
-  source                      = "./modules/vpc_flow_logs"
-  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
-  vpc_id                      = module.network.vpc_id
 }
