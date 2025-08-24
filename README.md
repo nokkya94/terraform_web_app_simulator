@@ -12,12 +12,13 @@ This project provisions a secure, production-style AWS infrastructure for a web 
 - **ALB:** Fronts EC2 web instances
 - **EC2:** Hosts the web app
 - **RDS (Postgres/MySQL):** Encrypted, private subnet
-- **S3:** For static assets + logs
+- **S3:** For static assets + logs, encrypted with KMS (CIS 2.1.1)
 - **WAF:** Protects ALB against common exploits
 - **IAM Roles & Policies:** Least privilege
-- **CloudWatch:** Monitoring + logs
+- **CloudWatch:** Monitoring + logs, encrypted with KMS (CIS 4.3)
 - **Terraform Backend:** Remote state in S3, DynamoDB lock
 - **CI/CD (GitHub Actions):** Plan, Apply, Security Scan → Deploy
+- **Service Control Policies (SCPs):** Organization-wide guardrails for S3, MFA, and region restrictions
 
 **Visual Flow:**
 
@@ -29,12 +30,21 @@ CI/CD pipeline → Terraform → AWS Infrastructure
 
 ### 2. Security Controls Implemented
 
-#### Infrastructure Hardening
+#### Infrastructure Hardening & Compliance
 
 - VPC isolation
 - Security groups with least privilege
 - RDS in private subnet with encryption enabled
 - ALB with HTTPS + WAF
+- S3 buckets encrypted with KMS (CIS 2.1.1, NIST SC-13)
+- CloudWatch log groups encrypted with KMS (CIS 4.3)
+- VPC Flow Logs enabled and encrypted
+- CloudTrail enabled in all regions
+- AWS Config rules for S3 versioning, encryption, and root MFA
+- Service Control Policies (SCPs):
+  - Deny public S3 buckets
+  - Require MFA for console access
+  - Restrict resource creation to approved regions
 
 #### Pipeline Security
 
@@ -56,12 +66,16 @@ CI/CD pipeline → Terraform → AWS Infrastructure
 ✅ Fully automated pipeline: Push to main → infra deployed → scans executed.
 ✅ Security by default: Builds break on misconfigurations or secret leaks.
 ✅ Visibility: Logs + scans provide continuous feedback loop.
+✅ Organization-wide guardrails: SCPs enforce security posture at the root level.
+✅ Continuous compliance: CIS AWS Foundations Benchmarks and NIST controls enforced via code.
 
 ### 4. Lessons Learned
 
 - **IaC Guardrails are critical:** Pipelines catch issues before they become cloud risks.
 - **Security is continuous:** Static + dynamic analysis complement each other.
 - **Cloud-native tools matter:** Using AWS-native state locking, logging, and monitoring avoids drift and improves resilience.
+- **SCPs are powerful:** Service Control Policies provide a strong foundation for multi-account security and compliance.
+- **Automated compliance:** Enforcing CIS benchmarks and NIST controls with Terraform and AWS Config ensures continuous audit readiness.
 
 ### 5. Future Improvements
 
@@ -69,6 +83,8 @@ CI/CD pipeline → Terraform → AWS Infrastructure
 - Centralized CloudTrail and VPC Flow Logs → Athena queries
 - Open Policy Agent (OPA) for compliance-as-code (CIS/NIST)
 - IAM Identity Center (SSO) for enterprise-ready auth
+- Automated remediation for non-compliant resources
+- Integration with Security Hub and GuardDuty for advanced threat detection
 
 ---
 
@@ -158,6 +174,11 @@ Or manually delete resources in the AWS Console and clear the S3 state file and 
 - Never commit secrets or state files to version control.
 - Use GitHub Actions for consistent, automated deployments and security checks.
 - Review plan output before applying changes, especially in production.
+- Encrypt all sensitive data at rest and in transit (S3, CloudWatch, RDS, etc.).
+- Use SCPs to enforce organization-wide security controls and compliance.
+- Enable AWS Config and CloudTrail for continuous monitoring and auditing.
+- Regularly review IAM roles and policies for least privilege.
+- Enable VPC Flow Logs and GuardDuty for network visibility and threat detection.
 
 ---
 
@@ -170,3 +191,4 @@ MIT
 ## Author
 
 Alexandru Tanasiev aka nokkya994
+AWS Cloud Security Engineer | DevSecOps | Infrastructure as Code Advocate
