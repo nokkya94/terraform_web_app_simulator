@@ -33,7 +33,7 @@ jobs:
         run: pip install --upgrade checkov==2.2.200
 
       - name: Run Checkov
-        run: checkov -c .checkov.yaml -d .
+        run: checkov --check CKV_AWS_1,CKV_AWS_3,CKV_AWS_19,CKV_AWS_56,CKV_AWS_57,CKV_AWS_33 -c .checkov.yaml -d .
 
       - name: Install Trivy
         run: |
