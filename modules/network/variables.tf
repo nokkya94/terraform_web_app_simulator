@@ -32,8 +32,3 @@ variable "alb_logs_bucket_name" {
   type        = string
   description = "S3 bucket name for storing ALB logs"
 }
-
-variable "cloudwatch_logs_kms_key_arn" {
-  description = "KMS key ID for CloudWatch logs"
-  type        = string
-}
