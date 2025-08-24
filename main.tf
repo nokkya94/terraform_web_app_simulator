@@ -71,8 +71,7 @@ module "aws_ssm_parameters" {
   db_username = var.db_username
   db_password = var.db_password
   environment = var.environment
-  kms_key_id  = module.kms.key_id
-
+  kms_key_id  = module.kms.ssm_key_arn
 }
 
 module "s3" {
