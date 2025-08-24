@@ -1,14 +1,92 @@
 # Terraform Web App Simulator
 
-This repository provisions a secure, production-style AWS infrastructure for a web application using Terraform and GitHub Actions. It includes automated CI/CD, security scanning, and best practices for state management.
+## Case Study: Secure AWS Infrastructure as Code Pipeline
 
-## Features
+### 1. Executive Summary
 
-- **Modular AWS Infrastructure**: VPC, subnets, security groups, EC2, RDS, S3, ALB, IAM, WAF, CloudWatch, and more.
-- **Remote State Management**: S3 and DynamoDB for Terraform state and locking.
-- **CI/CD with GitHub Actions**: Automated plan, apply, and security scanning on push and PRs.
-- **Security & Compliance**: tfsec, Checkov, Trivy, Semgrep, and Gitleaks for static and secret scanning.
-- **DAST**: OWASP ZAP runs against the deployed ALB endpoint.
+This project provisions a secure, production-style AWS infrastructure for a web application using Terraform and GitHub Actions. The solution demonstrates modern cloud security practices such as automated CI/CD, Infrastructure as Code (IaC), and security scanning at multiple layers (SAST, SCA, DAST, secrets). It’s designed to simulate what an enterprise-grade secure pipeline looks like, but deployed on AWS Free Tier.
+
+**Core Components:**
+
+- **VPC:** Private + public subnets
+- **ALB:** Fronts EC2 web instances
+- **EC2:** Hosts the web app
+- **RDS (Postgres/MySQL):** Encrypted, private subnet
+- **S3:** For static assets + logs, encrypted with KMS (CIS 2.1.1)
+- **WAF:** Protects ALB against common exploits
+- **IAM Roles & Policies:** Least privilege
+- **CloudWatch:** Monitoring + logs, encrypted with KMS (CIS 4.3)
+- **Terraform Backend:** Remote state in S3, DynamoDB lock
+- **CI/CD (GitHub Actions):** Plan, Apply, Security Scan → Deploy
+- **Service Control Policies (SCPs):** Organization-wide guardrails for S3, MFA, and region restrictions
+
+**Visual Flow:**
+
+User → ALB (WAF protected) → EC2 (App) → RDS (DB)
+     ↘ Logs to S3 → CloudWatch → Alerts
+
+CI/CD pipeline → Terraform → AWS Infrastructure
+     ↘ Security Scanners (tfsec, Checkov, Trivy, Semgrep, Gitleaks, OWASP ZAP)
+
+### 2. Security Controls Implemented
+
+#### Infrastructure Hardening & Compliance
+
+- VPC isolation
+- Security groups with least privilege
+- RDS in private subnet with encryption enabled
+- ALB with HTTPS + WAF
+- S3 buckets encrypted with KMS (CIS 2.1.1, NIST SC-13)
+- CloudWatch log groups encrypted with KMS (CIS 4.3)
+- VPC Flow Logs enabled and encrypted
+- CloudTrail enabled in all regions
+- AWS Config rules for S3 versioning, encryption, and root MFA
+- Service Control Policies (SCPs):
+  - Deny public S3 buckets
+  - Require MFA for console access
+  - Restrict resource creation to approved regions
+
+#### Pipeline Security
+
+- Static Scans: tfsec, Checkov, Trivy, Semgrep
+- Secrets Scans: Gitleaks
+- Dynamic Scan: OWASP ZAP against deployed ALB
+
+#### State Management
+
+- Terraform remote backend with S3 + DynamoDB locking
+
+#### CI/CD Governance
+
+- Auto plan & apply on PR/merge
+- Security scans block bad configs before deploy
+
+### 3. Outcomes
+
+✅ Fully automated pipeline: Push to main → infra deployed → scans executed.
+✅ Security by default: Builds break on misconfigurations or secret leaks.
+✅ Visibility: Logs + scans provide continuous feedback loop.
+✅ Organization-wide guardrails: SCPs enforce security posture at the root level.
+✅ Continuous compliance: CIS AWS Foundations Benchmarks and NIST controls enforced via code.
+
+### 4. Lessons Learned
+
+- **IaC Guardrails are critical:** Pipelines catch issues before they become cloud risks.
+- **Security is continuous:** Static + dynamic analysis complement each other.
+- **Cloud-native tools matter:** Using AWS-native state locking, logging, and monitoring avoids drift and improves resilience.
+- **SCPs are powerful:** Service Control Policies provide a strong foundation for multi-account security and compliance.
+- **Automated compliance:** Enforcing CIS benchmarks and NIST controls with Terraform and AWS Config ensures continuous audit readiness.
+
+### 5. Future Improvements
+
+- Multi-account deployment with AWS Organizations
+- Centralized CloudTrail and VPC Flow Logs → Athena queries
+- Open Policy Agent (OPA) for compliance-as-code (CIS/NIST)
+- IAM Identity Center (SSO) for enterprise-ready auth
+- Automated remediation for non-compliant resources
+- Integration with Security Hub and GuardDuty for advanced threat detection
+
+---
 
 ## Getting Started
 
@@ -23,32 +101,33 @@ This repository provisions a secure, production-style AWS infrastructure for a w
 
 1. **Clone the repository:**
 
-   ```bash
-   git clone https://github.com/nokkya94/terraform_web_app_simulator.git
-   cd terraform_web_app_simulator
-   ```
+```bash
+git clone https://github.com/nokkya94/terraform_web_app_simulator.git
+cd terraform_web_app_simulator
+```
 
 2. **Configure AWS Credentials:**
 
-   - Store your AWS credentials as GitHub secrets:
-     - `AWS_ACCESS_KEY_ID`
-     - `AWS_SECRET_ACCESS_KEY`
-   - Set other required secrets and variables in your repository settings:
-     - `DB_PASSWORD`, `IAM_ROLE_NAME`, `IAM_USER_NAME`, etc.
-     - Repository variables: `DB_USERNAME`, `ENVIRONMENT`, `S3_BUCKET_WITH_ALB_LOGS`, `WEBAPP_INSTANCE_KEY_NAME`, `BACKEND_STATE_BUCKET_NAME`, `DYNAMODB_STATE_TABLE_NAME`
+- Store your AWS credentials as GitHub secrets:
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+- Set other required secrets and variables in your repository settings:
+  - `DB_PASSWORD`, `IAM_ROLE_NAME`, `IAM_USER_NAME`, etc.
+  - Repository variables: `DB_USERNAME`, `ENVIRONMENT`, `S3_BUCKET_WITH_ALB_LOGS`, `WEBAPP_INSTANCE_KEY_NAME`, `BACKEND_STATE_BUCKET_NAME`, `DYNAMODB_STATE_TABLE_NAME`
 
 3. **Prepare Remote State:**
 
-   - Create an S3 bucket and DynamoDB table for state and locking.
-   - Example S3 bucket: `my-terraform-state-bucket-7748123`
-   - Example DynamoDB table: `terraform-lock-table-7748123` with primary key `LockID` (String).
+- Create an S3 bucket and DynamoDB table for state and locking.
+- Example S3 bucket: `my-terraform-state-bucket-7748123`
+- Example DynamoDB table: `terraform-lock-table-7748123` with primary key `LockID` (String).
 
 4. **Configure SSH Key:**
-   - Generate an SSH key pair if you don't have one:
-     ```bash
-     ssh-keygen -t rsa -b 4096 -f web_instance_key
-     ```
-   - Add the public key to GitHub secrets as `WEB_INSTANCE_KEY_PUB`.
+
+- Generate an SSH key pair if you don't have one:
+  ```bash
+  ssh-keygen -t rsa -b 4096 -f web_instance_key
+  ```
+- Add the public key to GitHub secrets as `WEB_INSTANCE_KEY_PUB`.
 
 ### Usage
 
@@ -95,6 +174,11 @@ Or manually delete resources in the AWS Console and clear the S3 state file and 
 - Never commit secrets or state files to version control.
 - Use GitHub Actions for consistent, automated deployments and security checks.
 - Review plan output before applying changes, especially in production.
+- Encrypt all sensitive data at rest and in transit (S3, CloudWatch, RDS, etc.).
+- Use SCPs to enforce organization-wide security controls and compliance.
+- Enable AWS Config and CloudTrail for continuous monitoring and auditing.
+- Regularly review IAM roles and policies for least privilege.
+- Enable VPC Flow Logs and GuardDuty for network visibility and threat detection.
 
 ---
 
@@ -107,3 +191,4 @@ MIT
 ## Author
 
 Alexandru Tanasiev aka nokkya994
+AWS Cloud Security Engineer | DevSecOps | Infrastructure as Code Advocate

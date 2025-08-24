@@ -38,3 +38,24 @@ resource "aws_config_config_rule" "s3_bucket_versioning_enabled" {
     source_identifier = "S3_BUCKET_VERSIONING_ENABLED"
   }
 }
+
+# Ensure every bucket has SSE enabled. (CIS 2.1.1 / NIST SC-13)
+resource "aws_config_config_rule" "s3_bucket_encryption_enabled" {
+  name = "s3-bucket-encryption-enabled"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "S3_BUCKET_SERVER_SIDE_ENCRYPTION_ENABLED"
+  }
+}
+
+# IAM Root Account MFA Enabled (CIS 1.1)
+resource "aws_config_config_rule" "root_mfa_enabled" {
+  name = "root-mfa-enabled"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "ROOT_ACCOUNT_MFA_ENABLED"
+  }
+}
+
