@@ -105,34 +105,35 @@ resource "aws_subnet" "private_subnet" {
 #tfsec:ignore:AWS089
 #tfsec:ignore:aws-cloudwatch-log-group-customer-key
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
-  name              = "/aws/vpc/flowlogs/main-vpc"
+  name              = "/aws/vpc/flow-logs"
   retention_in_days = 30
-  kms_key_id = var.cloudwatch_logs_kms_key_arn
+  kms_key_id        = var.cloudwatch_logs_kms_key_arn
 }
 
-resource "aws_flow_log" "main_vpc_flow_log" {
-  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
-  log_destination_type = "cloud-watch-logs"
-  traffic_type         = "ALL"
-  vpc_id               = aws_vpc.main_vpc.id
-  iam_role_arn         = aws_iam_role.vpc_flow_logs_role.arn
-}
-
-resource "aws_iam_role" "vpc_flow_logs_role" {
+resource "aws_iam_role" "vpc_flow_logs" {
   name = "vpc-flow-logs-role"
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Effect = "Allow",
-      Principal = { Service = "vpc-flow-logs.amazonaws.com" },
-      Action = "sts:AssumeRole"
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Action": "sts:AssumeRole",
+      "Principal": { "Service": "vpc-flow-logs.amazonaws.com" },
+      "Effect": "Allow",
+      "Sid": ""
     }]
   })
 }
 
+resource "aws_flow_log" "vpc_flow_log_main" {
+  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
+  log_destination_type = "cloud-watch-logs"
+  traffic_type         = "ALL"
+  vpc_id               = aws_vpc.main_vpc.id
+  iam_role_arn         = aws_iam_role.vpc_flow_logs.arn
+}
+
 resource "aws_iam_role_policy" "vpc_flow_logs_policy" {
   name = "vpc-flow-logs-policy"
-  role = aws_iam_role.vpc_flow_logs_role.id
+  role = aws_iam_role.vpc_flow_logs.id
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [{

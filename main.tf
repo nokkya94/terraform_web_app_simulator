@@ -91,7 +91,7 @@ module "waf" {
   cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
 }
 
-# commenting now for cost optimization
+# commenting now as it incurs costs
 # module "guardduty" {
 #   source = "./modules/guardduty"
 # }
@@ -102,12 +102,7 @@ module "aws_config" {
   depends_on               = [module.s3]
 }
 
+# commenting now as it incurs costs
 module "scp_policies" {
   source = "./modules/scp_policies"
-}
-
-module "vpc_flow_logs" {
-  source                      = "./modules/vpc_flow_logs"
-  cloudwatch_logs_kms_key_arn = module.kms.cloudwatch_logs_kms_key_arn
-  vpc_id                      = module.network.vpc_id
 }

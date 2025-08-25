@@ -34,6 +34,6 @@ variable "alb_logs_bucket_name" {
 }
 
 variable "cloudwatch_logs_kms_key_arn" {
-  description = "KMS key ID for CloudWatch logs"
+  description = "KMS key ARN for CloudWatch logs"
   type        = string
 }
