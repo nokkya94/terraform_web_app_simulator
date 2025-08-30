@@ -103,6 +103,6 @@ module "aws_config" {
 }
 
 # commenting now as it incurs costs
-module "scp_policies" {
-  source = "./modules/scp_policies"
-}
+# module "scp_policies" {
+#   source = "./modules/scp_policies"
+# }
