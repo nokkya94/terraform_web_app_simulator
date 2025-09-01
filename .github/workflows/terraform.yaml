@@ -196,8 +196,39 @@ jobs:
           exit 1
 
       - name: Run OWASP ZAP DAST
+        id: zap
         uses: zaproxy/action-baseline@v0.13.0
         with:
           target: "http://${{ needs.terraform.outputs.alb_url }}"
           fail_action: false
-          artifact_name: zap_scan_report
+          allow_issue_writing: true
+          # disable artifact upload, we'll handle it manually
+          artifact_name: ""
+
+      # Explicit artifact upload so you control naming
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-scan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            zap-report/*
+            owasp-zap-report.html
+          if-no-files-found: warn # don't fail if no report is generated
+          retention-days: 14
+
+      - name: Add ZAP Report to Job Summary
+        if: always() # ensure it runs even if ZAP fails
+        run: |
+          echo "## OWASP ZAP DAST Report" >> $GITHUB_STEP_SUMMARY
+          if [ -f owasp-zap-report.html ]; then
+            echo "<details><summary>Click to view ZAP Report</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          # Escape HTML to Markdown-friendly format
+            echo '```html' >> $GITHUB_STEP_SUMMARY
+            cat owasp-zap-report.html | head -n 200 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_No ZAP HTML report was generated._" >> $GITHUB_STEP_SUMMARY
+          fi
