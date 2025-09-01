@@ -203,7 +203,7 @@ jobs:
           fail_action: false
           allow_issue_writing: true
           # disable artifact upload, we'll handle it manually
-          artifact_name: ""
+          upload_artifact: false
 
       # Explicit artifact upload so you control naming
       - name: Upload ZAP Report
