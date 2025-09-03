@@ -23,6 +23,8 @@ flowchart LR
     NAT[(NAT Gateway)]:::net
 
     subgraph Public[Public Subnets (2+ AZs)]
+      ALB
+      IGW
       ALB --- IGW
     end
 
