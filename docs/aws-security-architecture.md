@@ -19,16 +19,14 @@ flowchart LR
   WAF --> ALB["Application Load Balancer<br/>(HTTPS)" ]:::aws
 
   subgraph VPC[Amazon VPC]
-    direction TB
     IGW[(Internet Gateway)]:::net
     NAT[(NAT Gateway)]:::net
+
     subgraph Public[Public Subnets (2+ AZs)]
-      direction TB
       ALB --- IGW
     end
 
     subgraph Private[Private Subnets (2+ AZs)]
-      direction TB
       EC2["EC2 Web Tier<br/>(AutoScaling or 1-2 instances)" ]:::aws
       RDS[("Amazon RDS<br/>Postgres/MySQL (KMS‑encrypted)" )]:::data
       EC2 -->|JDBC 5432/3306| RDS
@@ -46,7 +44,6 @@ flowchart LR
 
   %% State and pipeline
   subgraph CI[CI/CD — GitHub Actions]
-    direction TB
     TF[Terraform Plan/Apply]:::svc
     Scanners["Security Scans:<br/>tfsec • Checkov • Trivy • Semgrep • Gitleaks" ]:::sec
     ZAP[DAST: OWASP ZAP]:::sec
@@ -74,7 +71,6 @@ flowchart LR
 
   %% Config
   subgraph AWSConfig[AWS Config]
-    direction TB
     Recorder[Configuration Recorder]:::aws
     Rules["Managed Rules<br/>e.g., s3-bucket-encryption-enabled,<br/>root-account-mfa-enabled,<br/>cloudtrail-enabled" ]:::sec
     Recorder --> Rules
@@ -105,7 +101,7 @@ flowchart LR
 - **Network isolation:** Public subnets host only the **ALB** and egress infra; **EC2/RDS** live in private subnets behind **security groups** (least‑privilege ports).
 - **Data‑at‑rest:** **RDS**, **CloudWatch Log Groups**, and **S3 buckets** use **KMS** encryption.
 - **Telemetry:** **ALB access logs**, **WAF logs**, **VPC Flow Logs**, **CloudTrail**, **App logs** to S3/CloudWatch for centralized visibility.
-- **Configuration governance:** **AWS Config** recorder + **managed rules** evaluate resources (S3 encryption/versioning, root account MFA, CloudTrail enabled, etc.). Config history/snapshots stored in S3; events surfaced through EventBridge → SNS for actioning.
+- **Configuration governance:** **AWS Config** recorder + **managed rules** evaluate resources (S3 encryption/versioning, root account MFA, CloudTrail enabled, etc.). Config history/snapshots stored in S3.
 - **Pipeline guardrails:** Terraform plans gated by **tfsec / Checkov**; supply‑chain checks with **Trivy / Semgrep**; **Gitleaks** prevents secrets in Git; **ZAP** runs DAST against the ALB.
 - **State hygiene:** Terraform **S3 backend** + **DynamoDB lock** to avoid drift/concurrency.
 
@@ -115,14 +111,12 @@ flowchart LR
 
 - Drop this file into `docs/aws-security-architecture.md` (or rename as you prefer).
 - In your `README.md`, add a link and a preview image if you want:
+
   - GitHub **renders Mermaid automatically** inside Markdown; no extra tooling needed.
   - Example snippet:
+
     ```md
     ## Architecture
+
     See **[Security-Focused Architecture](docs/aws-security-architecture.md)**
-
     ```
-
----
-
-*Author: Generated for Alexandru’s portfolio — AWS Cloud Security Engineer*
