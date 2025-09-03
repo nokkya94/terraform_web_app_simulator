@@ -6,6 +6,10 @@
 
 This project provisions a secure, production-style AWS infrastructure for a web application using Terraform and GitHub Actions. The solution demonstrates modern cloud security practices such as automated CI/CD, Infrastructure as Code (IaC), and security scanning at multiple layers (SAST, SCA, DAST, secrets). It’s designed to simulate what an enterprise-grade secure pipeline looks like, but deployed on AWS Free Tier.
 
+## Architecture
+
+See **[Security-Focused Architecture](docs/aws-security-architecture.md)**.
+
 **Core Components:**
 
 - **VPC:** Private + public subnets
