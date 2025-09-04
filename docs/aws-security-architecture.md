@@ -111,17 +111,3 @@ flowchart LR
 - **State hygiene:** Terraform **S3 backend** + **DynamoDB lock** to avoid drift/concurrency.
 
 ---
-
-## 4) How to embed this in your repo
-
-- Drop this file into `docs/aws-security-architecture.md` (or rename as you prefer).
-- In your `README.md`, add a link and a preview image if you want:
-
-  - GitHub **renders Mermaid automatically** inside Markdown; no extra tooling needed.
-  - Example snippet:
-
-    ```md
-    ## Architecture
-
-    See **[Security-Focused Architecture](docs/aws-security-architecture.md)**
-    ```
