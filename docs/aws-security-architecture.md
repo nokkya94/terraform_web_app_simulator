@@ -18,17 +18,21 @@ flowchart LR
   Internet[[Internet]]:::svc --> WAF["AWS WAFv2<br/>Web ACL"]:::sec
   WAF --> ALB["Application Load Balancer<br/>(HTTPS)"]:::aws
 
-  subgraph VPC[Amazon VPC]
+  subgraph VPC["Amazon VPC"]
     IGW[(Internet Gateway)]:::net
     NAT[(NAT Gateway)]:::net
 
-    subgraph Public[Public Subnets (2+ AZs)]
+    %% Public subnets (for ALB and IGW)
+    subgraph PublicSubnets
+      direction LR
       ALB
       IGW
       ALB --- IGW
     end
 
-    subgraph Private[Private Subnets (2+ AZs)]
+    %% Private subnets (for EC2 and RDS)
+    subgraph PrivateSubnets
+      direction LR
       EC2["EC2 Web Tier<br/>(AutoScaling or 1-2 instances)"]:::aws
       RDS["Amazon RDS<br/>Postgres/MySQL (KMS‑encrypted)"]:::data
       EC2 -->|JDBC 5432/3306| RDS
@@ -45,7 +49,7 @@ flowchart LR
   EC2 -. App Logs .-> CWLogs["CloudWatch Log Groups<br/>(KMS‑encrypted)"]:::aws
 
   %% State and pipeline
-  subgraph CI[CI/CD — GitHub Actions]
+  subgraph CI_CD["CI/CD — GitHub Actions"]
     TF[Terraform Plan/Apply]:::svc
     Scanners["Security Scans:<br/>tfsec • Checkov • Trivy • Semgrep • Gitleaks"]:::sec
     ZAP[DAST: OWASP ZAP]:::sec
@@ -72,7 +76,7 @@ flowchart LR
   S3Waf --> Athena["Amazon Athena (Analytics)"]:::aws
 
   %% Config
-  subgraph AWSConfig[AWS Config]
+  subgraph AWSConfig["AWS Config"]
     Recorder["Configuration Recorder"]:::aws
     Rules["Managed Rules<br/>e.g., s3-bucket-encryption-enabled,<br/>root-account-mfa-enabled,<br/>cloudtrail-enabled"]:::sec
     Recorder --> Rules
@@ -80,7 +84,6 @@ flowchart LR
 
   Rules --> Findings["Non‑compliant Evaluations"]:::sec
   Findings -->|Notifications/Events| Events["EventBridge"]:::aws
-  Events --> SNS["SNS Topic (Ops/Sec)"]:::aws
 
   Recorder --> S3Cfg[(S3 — Config History/Snapshots)]:::data
   Recorder --> CwCfg["CloudWatch Logs"]:::aws
