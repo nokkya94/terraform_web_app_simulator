@@ -311,4 +311,14 @@ jobs:
           TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: terraform destroy -auto-approve -input=false
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          TF_VAR_db_username: ${{ vars.DB_USERNAME }}
+          TF_VAR_environment: ${{ vars.ENVIRONMENT }}
+          TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
+          TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
+          TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
+          TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
+          TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
+          TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
