@@ -1,9 +1,5 @@
 name: Terraform CI
 
-concurrency:
-  group: terraform-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   issues: write
@@ -14,26 +10,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      action:
-        description: Select what to run
-        type: choice
-        required: true
-        options: [apply, destroy]
-        default: apply
-      confirm:
-        description: "Type EXACTLY: I UNDERSTAND THIS WILL CHANGE BILLING"
-        type: string
-        required: true
 
 jobs:
   security:
-    name: SCA & SAST
+    name: "SCA & SAST"
     runs-on: ubuntu-latest
     environment: dev
-    # Run on push/PR and on manual "apply"; SKIP for "destroy"
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'apply'
 
     steps:
       - name: Checkout code
@@ -44,7 +26,8 @@ jobs:
           wget https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64
           chmod +x tfsec-linux-amd64
           sudo mv tfsec-linux-amd64 /usr/local/bin/tfsec
-
+      # -soft-fail=false and no continue-on-error.
+      # This means if any CIS violation occurs infra job won't execute
       - name: Run tfsec
         run: tfsec .
 
@@ -58,6 +41,7 @@ jobs:
         run: |
           LATEST=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep '"tag_name":' | head -n 1 | cut -d '"' -f4)
           VERSION=${LATEST#v}
+          echo "Latest Trivy version: $LATEST"
           wget https://github.com/aquasecurity/trivy/releases/download/${LATEST}/trivy_${VERSION}_Linux-64bit.tar.gz
           tar -xzf trivy_${VERSION}_Linux-64bit.tar.gz
           sudo mv trivy /usr/local/bin/
@@ -82,17 +66,18 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gitleaks detect --source=. --report-path=gitleaks-report.json
 
-  terraform_plan:
-    name: Terraform Plan (no apply on push/PR)
+  terraform:
+    name: "Terraform Workflow"
     runs-on: ubuntu-latest
-    needs: security
-    environment: dev
-    # Always run on push/PR. On manual dispatch, only for "apply" to prep plan.
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'apply'
+    needs: security # 👈 security must pass first
+    environment: dev # <-- Specify the environment here
+
+    outputs:
+      alb_url: ${{ steps.get_alb.outputs.alb_url }}
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -151,51 +136,8 @@ jobs:
           TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
           TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan
-
-  terraform_apply:
-    name: Terraform Apply (manual only)
-    runs-on: ubuntu-latest
-    needs: terraform_plan
-    environment: dev
-    if: >
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.action == 'apply' &&
-      github.event.inputs.confirm == 'I UNDERSTAND THIS WILL CHANGE BILLING'
-
-    outputs:
-      alb_url: ${{ steps.get_alb.outputs.alb_url }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.8.5
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Download Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: .
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply
+      - name: Terraform Apply (main branch only)
+        if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
         env:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
@@ -208,25 +150,41 @@ jobs:
           TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
           TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
 
-      - name: Get ALB URL from Terraform output
+      - name: Get ALB URL from Terraform output (main branch only)
+        if: github.ref == 'refs/heads/main'
         id: get_alb
         run: echo "alb_url=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
 
-    dast:
+      - name: Wait for ALB to be ready (main branch only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          for i in {1..30}; do
+            if curl -sSf "http://${{ steps.get_alb.outputs.alb_url }}" ; then
+              echo "ALB is ready!"
+              exit 0
+            else
+              echo "Waiting for ALB... ($i/30)"
+              sleep 20
+            fi
+          done
+          echo "ALB did not become ready in time."
+          exit 1
+
+  dast:
     runs-on: ubuntu-latest
-    needs: terraform_apply
+    needs: terraform
+    if: github.ref == 'refs/heads/main'
     environment: dev
-    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Wait for ALB to be ready
         run: |
-          echo "Waiting for ALB: http://${{ needs.terraform_apply.outputs.alb_url }}"
+          echo "Waiting for ALB: http://${{ needs.terraform.outputs.alb_url }}"
           for i in {1..30}; do
-            if curl -sSf "http://${{ needs.terraform_apply.outputs.alb_url }}" > /dev/null; then
+            if curl -sSf "http://${{ needs.terraform.outputs.alb_url }}" > /dev/null; then
               echo "ALB is ready!"
               exit 0
             else
@@ -241,11 +199,13 @@ jobs:
         id: zap
         uses: zaproxy/action-baseline@v0.14.0
         with:
-          target: "http://${{ needs.terraform_apply.outputs.alb_url }}"
+          target: "http://${{ needs.terraform.outputs.alb_url }}"
           fail_action: false
           allow_issue_writing: true
+          # disable artifact upload, we'll handle it manually
           upload_artifact: false
 
+      # Explicit artifact upload so you control naming
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
@@ -253,65 +213,22 @@ jobs:
           path: |
             zap-report/*
             owasp-zap-report.html
-          if-no-files-found: warn
+          if-no-files-found: warn # don't fail if no report is generated
           retention-days: 14
 
       - name: Add ZAP Report to Job Summary
-        if: always()
+        if: always() # ensure it runs even if ZAP fails
         run: |
           echo "## OWASP ZAP DAST Report" >> $GITHUB_STEP_SUMMARY
           if [ -f owasp-zap-report.html ]; then
             echo "<details><summary>Click to view ZAP Report</summary>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+          # Escape HTML to Markdown-friendly format
             echo '```html' >> $GITHUB_STEP_SUMMARY
-            head -n 200 owasp-zap-report.html >> $GITHUB_STEP_SUMMARY
+            cat owasp-zap-report.html | head -n 200 >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "</details>" >> $GITHUB_STEP_SUMMARY
           else
             echo "_No ZAP HTML report was generated._" >> $GITHUB_STEP_SUMMARY
-
-  terraform_destroy:
-    name: Terraform Destroy (manual only)
-    runs-on: ubuntu-latest
-    environment: dev
-    if: >
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.action == 'destroy' &&
-      github.event.inputs.confirm == 'I UNDERSTAND THIS WILL CHANGE BILLING'
-    env:
-      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-      TF_VAR_db_username: ${{ vars.DB_USERNAME }}
-      TF_VAR_environment: ${{ vars.ENVIRONMENT }}
-      TF_VAR_s3_bucket_with_alb_logs: ${{ vars.S3_BUCKET_WITH_ALB_LOGS }}
-      TF_VAR_webapp_instance_key_name: ${{ vars.WEBAPP_INSTANCE_KEY_NAME }}
-      TF_VAR_iam_role_name: ${{ secrets.IAM_ROLE_NAME }}
-      TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
-      TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
-      TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.8.5
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Assert TF_VARs are present (no secrets leaked)
-        run: |
-          env | grep -E '^TF_VAR_' | sed 's/=.*/=<redacted>/' || { echo "Missing TF_VAR_*"; exit 1; }
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve -input=false
+          fi
