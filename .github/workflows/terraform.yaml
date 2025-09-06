@@ -31,10 +31,8 @@ jobs:
   security:
     name: SCA & SAST
     runs-on: ubuntu-latest
-    environment: dev
-    # Run on push/PR and on manual "apply"; SKIP for "destroy"
+    # Run on push/PR and on manual 'apply'. Skip for 'destroy'.
     if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'apply'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -83,13 +81,14 @@ jobs:
         run: gitleaks detect --source=. --report-path=gitleaks-report.json
 
   terraform_plan:
-    name: Terraform Plan (no apply on push/PR)
+    name: Terraform Plan
     runs-on: ubuntu-latest
     needs: security
-    environment: dev
-    # Always run on push/PR. On manual dispatch, only for "apply" to prep plan.
-    if: github.event_name != 'workflow_dispatch' || github.event.inputs.action == 'apply'
-
+    # Plan on push to main, same-repo PRs, and manual apply. Skip forked PRs (no secrets).
+    if: >
+      (github.event_name == 'push') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -166,10 +165,8 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       github.event.inputs.action == 'apply' &&
       github.event.inputs.confirm == 'I UNDERSTAND THIS WILL CHANGE BILLING'
-
     outputs:
       alb_url: ${{ steps.get_alb.outputs.alb_url }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -212,12 +209,12 @@ jobs:
         id: get_alb
         run: echo "alb_url=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
 
-    dast:
+  dast:
+    name: OWASP ZAP after Apply
     runs-on: ubuntu-latest
     needs: terraform_apply
     environment: dev
-    if: always() && github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
-
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -289,7 +286,6 @@ jobs:
       TF_VAR_iam_user_name: ${{ secrets.IAM_USER_NAME }}
       TF_VAR_backend_state_bucket_name: ${{ vars.BACKEND_STATE_BUCKET_NAME }}
       TF_VAR_dynamodb_state_table_name: ${{ vars.DYNAMODB_STATE_TABLE_NAME }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
