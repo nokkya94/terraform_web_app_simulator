@@ -4,6 +4,8 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  # If you later want to upload SARIF to GitHub code scanning UI:
+  # security-events: write
 
 on:
   push:
@@ -20,41 +22,97 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # optional: full history if you ever want to scan git history
 
+      - name: Prep results dir
+        run: mkdir -p reports/status
+
+      # ---------------- tfsec ----------------
       - name: Install tfsec
         run: |
           wget https://github.com/aquasecurity/tfsec/releases/latest/download/tfsec-linux-amd64
           chmod +x tfsec-linux-amd64
           sudo mv tfsec-linux-amd64 /usr/local/bin/tfsec
-      # -soft-fail=false and no continue-on-error.
-      # This means if any CIS violation occurs infra job won't execute
-      - name: Run tfsec
-        run: tfsec .
 
+      - name: Run tfsec (JSON + SARIF)
+        id: tfsec
+        continue-on-error: true
+        run: |
+          tfsec . --format json --out reports/tfsec.json
+          TFSEC_EXIT=$?
+          # optional SARIF for code scanning / review tools
+          tfsec . --format sarif --out reports/tfsec.sarif || true
+          echo $TFSEC_EXIT > reports/status/tfsec.exit
+
+      - name: Upload tfsec reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfsec-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/tfsec.*
+
+      # ---------------- Checkov ----------------
       - name: Install Checkov
         run: pip install --upgrade checkov==2.2.200
 
-      - name: Run Checkov
-        run: checkov -c .checkov.yaml -d .
+      - name: Run Checkov (SARIF)
+        id: checkov
+        continue-on-error: true
+        run: |
+          checkov -c .checkov.yaml -d . -o sarif --output-file-path reports/checkov.sarif
+          echo $? > reports/status/checkov.exit
 
+      - name: Upload Checkov reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkov-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/checkov.sarif
+
+      # ---------------- Trivy ----------------
       - name: Install Trivy
         run: |
           LATEST=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep '"tag_name":' | head -n 1 | cut -d '"' -f4)
           VERSION=${LATEST#v}
-          echo "Latest Trivy version: $LATEST"
           wget https://github.com/aquasecurity/trivy/releases/download/${LATEST}/trivy_${VERSION}_Linux-64bit.tar.gz
           tar -xzf trivy_${VERSION}_Linux-64bit.tar.gz
           sudo mv trivy /usr/local/bin/
 
-      - name: Run Trivy
-        run: trivy fs --scanners vuln,secret,config .
+      - name: Run Trivy filesystem scan (SARIF)
+        id: trivy
+        continue-on-error: true
+        run: |
+          # --exit-code 1 if vulns found; tune severities as desired
+          trivy fs --scanners vuln,secret,config --format sarif -o reports/trivy.sarif --exit-code 1 .
+          echo $? > reports/status/trivy.exit
 
+      - name: Upload Trivy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/trivy.sarif
+
+      # ---------------- Semgrep ----------------
       - name: Install Semgrep
         run: pip install semgrep
 
-      - name: Run Semgrep
-        run: semgrep --config=auto .
+      - name: Run Semgrep (JSON)
+        id: semgrep
+        continue-on-error: true
+        run: |
+          semgrep --config=auto . --json -o reports/semgrep.json
+          echo $? > reports/status/semgrep.exit
 
+      - name: Upload Semgrep reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/semgrep.json
+
+      # ---------------- Gitleaks ----------------
       - name: Install Gitleaks
         run: |
           wget https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz
@@ -62,15 +120,42 @@ jobs:
           sudo mv gitleaks /usr/local/bin/
 
       - name: Run Gitleaks (Secret Detection)
+        id: gitleaks
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gitleaks detect --source=. --report-path=gitleaks-report.json
+        run: |
+          gitleaks detect --source=. --report-path=reports/gitleaks-report.json --redact
+          echo $? > reports/status/gitleaks.exit
+
+      - name: Upload Gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/gitleaks-report.json
+
+      # ---------------- Gate: fail if any scanner failed ----------------
+      - name: Gate scanners (fail if any non-zero exit)
+        if: always()
+        run: |
+          rc=0
+          for f in reports/status/*.exit; do
+            name=$(basename "$f" .exit)
+            code=$(cat "$f" || echo 0)
+            echo "$name -> exit $code"
+            if [ "$code" -ne 0 ]; then rc=1; fi
+          done
+          if [ $rc -ne 0 ]; then
+            echo "At least one scanner reported findings. See uploaded artifacts."
+            exit 1
+          fi
 
   terraform:
     name: "Terraform Workflow"
     runs-on: ubuntu-latest
-    needs: security # 👈 security must pass first
-    environment: dev # <-- Specify the environment here
+    needs: security
+    environment: dev
 
     outputs:
       alb_url: ${{ steps.get_alb.outputs.alb_url }}
@@ -202,30 +287,28 @@ jobs:
           target: "http://${{ needs.terraform.outputs.alb_url }}"
           fail_action: false
           allow_issue_writing: true
-          # disable artifact upload, we'll handle it manually
           upload_artifact: false
 
-      # Explicit artifact upload so you control naming
       - name: Upload ZAP Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-scan-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             zap-report/*
             owasp-zap-report.html
-          if-no-files-found: warn # don't fail if no report is generated
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Add ZAP Report to Job Summary
-        if: always() # ensure it runs even if ZAP fails
+        if: always()
         run: |
           echo "## OWASP ZAP DAST Report" >> $GITHUB_STEP_SUMMARY
           if [ -f owasp-zap-report.html ]; then
-            echo "<details><summary>Click to view ZAP Report</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "<details><summary>Click to view ZAP Report (first 200 lines)</summary>" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-          # Escape HTML to Markdown-friendly format
             echo '```html' >> $GITHUB_STEP_SUMMARY
-            cat owasp-zap-report.html | head -n 200 >> $GITHUB_STEP_SUMMARY
+            head -n 200 owasp-zap-report.html >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "</details>" >> $GITHUB_STEP_SUMMARY

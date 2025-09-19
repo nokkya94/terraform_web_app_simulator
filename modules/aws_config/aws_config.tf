@@ -24,6 +24,7 @@ resource "aws_config_configuration_recorder" "main" {
 resource "aws_config_delivery_channel" "main" {
   name           = var.delivery_channel_name
   s3_bucket_name = var.s3_bucket_name
+  s3_key_prefix  = var.s3_key_prefix
 
   dynamic "snapshot_delivery_properties" {
     for_each = var.delivery_frequency_hours == null ? [] : [1]
@@ -31,14 +32,6 @@ resource "aws_config_delivery_channel" "main" {
       # Valid frequencies per AWS are: "One_Hour", "Three_Hours", "Six_Hours", "Twelve_Hours", "TwentyFour_Hours"
       # We map from an integer to the nearest valid enum in variables.tf, if you want that — kept simple here.
       delivery_frequency = "TwentyFour_Hours"
-    }
-  }
-
-  dynamic "s3_key_prefix" {
-    for_each = var.s3_key_prefix == null ? [] : [var.s3_key_prefix]
-    content {
-      # NOTE: aws_config_delivery_channel does not actually have a nested block for prefix,
-      # leaving this dynamic as a placeholder to show the pattern.
     }
   }
 
