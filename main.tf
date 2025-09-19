@@ -97,9 +97,18 @@ module "waf" {
 # }
 
 module "aws_config" {
-  source                   = "./modules/aws_config"
-  s3_name_with_config_logs = module.s3.s3_name_with_config_logs
-  depends_on               = [module.s3]
+  source            = "./modules/aws_config"
+  s3_bucket_name    = module.s3.s3_name_with_config_logs
+
+  s3_key_prefix                = "aws-config/"
+  include_global_resource_types = true
+  delivery_frequency_hours     = 24  # snapshots daily
+
+  enable_rule_s3_versioning = true
+  enable_rule_s3_encryption = true
+  enable_rule_root_mfa      = true
+
+  depends_on        = [module.s3]
 }
 
 # commenting now as it incurs costs
